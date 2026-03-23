@@ -1,13 +1,13 @@
 import 'react-native-get-random-values'
 import {useState, useEffect} from "react";
 import { v4 as uuidv4 } from "uuid";
-import {Alert, FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet} from "react-native";
+import { FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet} from "react-native";
 import { Suggestion } from "../types/suggestion";
 import { router } from 'expo-router';
-import { API_BASE_URL } from '../constants/api'
+import { useLocationSearch } from '@/hooks/useLocation';
 
 export default function SearchBox() {
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const { suggestions, search } = useLocationSearch();
     const [query, setQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('')
     const [sessionToken] = useState(() => uuidv4());
@@ -23,40 +23,12 @@ export default function SearchBox() {
     }, [query]);
 
     useEffect(() => {
-        const fetchSuggestions = async () => {
-            if (!debouncedQuery.trim()) {
-                setSuggestions([]);
-                return;
-            }
-            
-            try {
-                const url = new URL(`${API_BASE_URL}/mapbox/locations`);
-                url.searchParams.append("q", debouncedQuery);
-                url.searchParams.append("session_token", sessionToken);
-
-                const res = await fetch(url.toString())
-                
-                if (res.ok) {
-                    const data = await res.json();
-
-                    if (data.suggestions && data.suggestions.length > 0) {
-                        setSuggestions(data.suggestions);
-                    } else {
-                        setSuggestions([]);
-                    }
-                }
-                else {
-                    const errorData = await res.json();
-                    Alert.alert("Error", errorData.error || "Failed to fetch suggestions");
-                    setSuggestions([]);
-                }
-            } catch (error) {
-                Alert.alert(`Check your Connection: ${error}`);
-                setSuggestions([]);
-            }
+        if (debouncedQuery.trim()) {
+            search(debouncedQuery, sessionToken);
+        } else {
+            search('', sessionToken); // Clear suggestions when query is empty
         }
-        fetchSuggestions();
-    }, [debouncedQuery, sessionToken])
+    }, [search, debouncedQuery, sessionToken])
 
     const handleSearch = (mapbox_id: string) => {
         router.push({ pathname: "/explore", params: { mapbox_id: mapbox_id , session_token: sessionToken } });

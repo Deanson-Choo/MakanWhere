@@ -18,3 +18,9 @@ export const submitValidator = [
         .isFloat({ min: 0, max: 5 }).withMessage('Rating must be a number between 0 and 5'),
     validateRequest
 ];
+
+export const updateValidator = [
+    body('rating')
+        .isFloat({ min: 0, max: 5 }).withMessage('Rating must be a number between 0 and 5'),
+    validateRequest
+]

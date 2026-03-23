@@ -1,6 +1,7 @@
-import { getReviewsByUserId, createDBReview } from "../models/review.model.js";
+import { getReviewsByUserId, createDBReview, getReviewsByLocationIdByUserId, updateDBReview, getOwnerOfReview, deleteDBReview} from "../models/review.model.js";
 
-export async function getReviews(req, res, next) {
+
+export async function getReviewsByUser(req, res, next) {
     try {
         const userId = req.user.id;
         const reviews = await getReviewsByUserId(userId);
@@ -9,6 +10,68 @@ export async function getReviews(req, res, next) {
             data: reviews
         })
     } catch (error) {
+        next(error);
+    }
+}
+
+export async function getReviewsByUserByLocation(req, res, next) {
+    // By right, there is only one review
+    try {
+        const userId = req.user.id;
+        const { mapbox_id } = req.params;
+        const reviews = await getReviewsByLocationIdByUserId(userId, mapbox_id);
+        res.status(200).json({
+            success: true,
+            data: reviews
+        })
+    } catch (error) {
+        next(error);
+    }   
+}
+
+export async function updateReview(req, res, next) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+        const { rating, comment } = req.body;
+
+        // Check if the review belongs to the user
+        const ownerId = await getOwnerOfReview(id);
+        if (ownerId !== userId) {
+            const err = new Error('Unauthorized: You can only update your own reviews');
+            err.statusCode = 403;
+            return next(err);
+        }
+
+        const updatedReview = await updateDBReview(id, rating, comment);
+        res.status(200).json({
+            success: true,
+            data: updatedReview
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function deleteReview(req, res, next) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params
+        
+        // Check if the review belongs to the user
+        const ownerId = await getOwnerOfReview(id);
+        if (ownerId != userId) {
+            const err = new Error('Unauthorized: You can only update your own reviews');
+            err.statusCode = 403;
+            return next(err);
+        }
+
+        const deletedReview = await deleteDBReview(id)
+        res.status(200).json({
+            success: true,
+            data: deletedReview
+        })
+    } catch(error) {
         next(error);
     }
 }

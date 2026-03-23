@@ -33,7 +33,7 @@ export async function register(req, res, next) {
         const newUser = await createUser(username, email, hashedPassword);
 
         // Generate a JWT token for the user
-        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         const data = {
             id: newUser.id,
@@ -74,7 +74,7 @@ export async function login(req, res, next) {
         }
 
         // Generate a JWT token for the user
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         const data = {
             id: user.id,

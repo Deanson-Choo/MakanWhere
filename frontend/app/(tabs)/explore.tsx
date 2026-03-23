@@ -1,25 +1,31 @@
-import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native';
-import StarRating, { StarRatingDisplay } from 'react-native-star-rating-widget';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
+import StarRating from 'react-native-star-rating-widget';
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useLocalSearchParams } from 'expo-router';
-import useLocation from '@/hooks/useLocation';
+import { useLocalSearchParams, router } from 'expo-router';
 import SearchBox from '@/components/SearchBox';
-import { Location } from '@/types/location';
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '@/constants/api';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocationSearch } from '@/hooks/useLocation';
+import { submitReview } from '@/services/reviews';
 
 export default function Explore() {
-    const { mapbox_id, session_token } = useLocalSearchParams<{ mapbox_id: string; session_token: string;}>();
-    const searchResult: Location | null = useLocation(mapbox_id, session_token);
+    const { mapbox_id, session_token } = useLocalSearchParams<{ mapbox_id: string; session_token: string;}>(); // Came from SearchBox component
+    const { selectedLocation, getDetails } = useLocationSearch();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [rating, setRating] = useState(searchResult?.rating || 0);
-    const [comment, setComment] = useState(searchResult?.comment || '');
-    const [hasReview, setHasReview] = useState(Boolean(searchResult?.rating || searchResult?.comment));
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [hasReview, setHasReview] = useState(false);
+
+    // Updates selectedLocation
+    useEffect(() => {
+        if (mapbox_id && session_token) {
+            getDetails(mapbox_id, session_token);
+        }
+    }, [mapbox_id, session_token, getDetails]);
 
     useEffect(() => {
-        if (!searchResult) {
+        if (!selectedLocation) {
             setRating(0);
             setComment('');
             setHasReview(false);
@@ -27,91 +33,59 @@ export default function Explore() {
             return;
         }
 
-        setRating(searchResult.rating ?? 0);
-        setComment(searchResult.comment ?? '');
-        setHasReview(Boolean((searchResult.rating ?? 0) > 0 || (searchResult.comment ?? '').trim().length > 0));
+        setHasReview(Boolean((selectedLocation.rating ?? 0) > 0 || (selectedLocation.comment ?? '').trim().length > 0));
         setIsEditing(false);
-    }, [searchResult]);
+    }, [selectedLocation]);
 
     const cancelEditing = () => {
-        setRating(searchResult?.rating ?? 0);
-        setComment(searchResult?.comment ?? '');
+        setRating(0);
+        setComment('');
         setIsEditing(false);
     }
 
+    const handleRedirect = (id: number) => {
+        router.push( {pathname: "/" , params: { highlightId: id } });
+    }
+
     const handleSubmit = async () => {
-        if (!searchResult) return;
+        if (!selectedLocation) return;
+        
+        const payload = {
+            mapbox_id: selectedLocation.mapbox_id,
+            rating,
+            comment,
+            place_name: selectedLocation.place_name,
+            address: selectedLocation.address,
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+        };
 
-        const endpoint = `${API_BASE_URL}/app/reviews`;
-
-        try {
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    userId: 1,
-                    ...searchResult,
-                    rating,
-                    comment
-                })
-            });
-
-            if (response.ok) {
-                setHasReview(rating > 0 || comment.trim().length > 0);
-                setIsEditing(false);
-                console.log("Review submitted successfully");
-            } else {
-                const errorText = await response.text();
-                console.error(`Failed to submit review: ${response.status} ${errorText}`);
-            }
-        } catch (error) {
-            console.error(`Network request failed while submitting review to ${endpoint}`, error);
-        }
+        await submitReview(payload);
+        setHasReview(true);
+        setIsEditing(false);
+        setRating(0);
+        setComment('');
     };
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 12, textAlign: 'center' }}>Find or Review Food Places</Text>
             {/* Search Box Section */}
             <View style={styles.searchSection}>
                 <SearchBox/>
             </View>
 
             {/* Search Result Section */}
-            {searchResult && (
+            {selectedLocation && (
                 <View style={styles.resultCard}>
-                    <Text style={styles.placeName}>{searchResult.place_name}</Text>
-                    <Text style={styles.address}>{searchResult.address}</Text>
+                    <Text style={styles.placeName}>{selectedLocation.place_name}</Text>
+                    <Text style={styles.address}>{selectedLocation.address}</Text>
                     {hasReview ? (
-                        isEditing ? (
-                            <View style={styles.reviewCard}>
-                                <Text style={styles.sectionTitle}>Your Review</Text>
-                                <Ionicons name="close-outline" size={24} style={styles.closeIcon} onPress={cancelEditing} />
-                                <StarRating rating={rating} starSize={20} maxStars={5} onChange={setRating} />
-                                <TextInput
-                                    style={styles.commentBox}
-                                    value={comment}
-                                    onChangeText={setComment}
-                                    placeholder="Share your thoughts..."
-                                    placeholderTextColor="#9CA3AF"
-                                    multiline
-                                    textAlignVertical="top"
-                                />
-                                <TouchableOpacity style={styles.submitButton} onPress={() => handleSubmit()}>
-                                    <Text style={styles.primaryButtonText}>Submit</Text>
-                                </TouchableOpacity>
-                            </View>
-                            ) : (
-                            <View style={styles.reviewCard}>
-                                <Text style={styles.sectionTitle}>Your Review</Text>
-                                <StarRatingDisplay rating={rating} starSize={20} maxStars={5} />
-                                <Text style={styles.comment}>{comment}</Text>
-                                <TouchableOpacity style={styles.primaryButton} onPress={() => setIsEditing(true)}>
-                                    <Text style={styles.primaryButtonText}>Edit Review</Text>
-                                </TouchableOpacity>
-                            </View>
-                            )
+                        <View>
+                            <TouchableOpacity style={styles.primaryButton} onPress = {() => handleRedirect(selectedLocation.id!)}>
+                                <Text style={styles.primaryButtonText}>See Your Review In Home Page</Text>
+                            </TouchableOpacity>
+                        </View>
                     ) : (
                         isEditing ? 
                             (

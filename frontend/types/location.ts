@@ -1,4 +1,5 @@
 export type Location = {
+    id?: number;
     mapbox_id: string;
     place_name: string;
     address: string;

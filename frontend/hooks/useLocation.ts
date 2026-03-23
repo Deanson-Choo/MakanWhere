@@ -1,68 +1,53 @@
-import { useEffect, useState } from "react";
-import { Alert } from "react-native";
-import { Location } from "../types/location";
-import { API_BASE_URL } from "../constants/api";
+import { useState, useCallback } from 'react';
+import { fetchLocations, fetchLocationDetails } from '@/services/mapbox';
+import { fetchReviewsByUserByLocation } from '@/services/reviews';
+import { Suggestion } from '@/types/suggestion';
+import { Location } from '@/types/location';
 
-export default function useLocation(mapbox_id: string, session_token: string) {
-    const [searchResult, setSearchResult] = useState<Location | null>(null);
+export function useLocationSearch() {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (!mapbox_id || !session_token) return;
+  const search = useCallback(async (query: string, sessionToken: string) => {
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
 
-        const fetchLocation = async () => {
-            try {
-                const url = new URL(`${API_BASE_URL}/mapbox/locations/${mapbox_id}`);
-                url.searchParams.append("session_token", session_token);
-                const res = await fetch(url.toString());
+    setIsLoading(true);
+    const data = await fetchLocations(query, sessionToken);
+    
+    if (data) {
+      setSuggestions(data);
+    }
+    
+    setIsLoading(false);
+  }, []); // No dependencies, as fetchLocations is a stable function
 
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.error || 'Could not fetch location details');
-                }
+  const getDetails = useCallback(async (mapboxId: string, sessionToken: string) => {
+    setIsLoading(true);
+    const review: Location | undefined = await fetchReviewsByUserByLocation(mapboxId);
+    if (review) {
+      setSelectedLocation(review); 
+      setIsLoading(false);
+      return review;
+    }
+    const data = await fetchLocationDetails(sessionToken, mapboxId);
+    
+    if (data) {
+      setSelectedLocation(data);
+    }
+    
+    setIsLoading(false);
+    return data;
+  }, []); // No dependencies, as fetchLocationDetails is a stable function
 
-                const data = await res.json();
-                setSearchResult(data);
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "Could not fetch location details";
-                Alert.alert("Error", errorMessage);
-                console.error(e);
-            }
-        };
-
-        const fetchReviewedLocation = async () => {
-            try {
-                const url = new URL(`${API_BASE_URL}/app/reviews/1/${mapbox_id}`);
-                const res = await fetch(url.toString());
-
-                if (!res.ok) {
-                    await fetchLocation();
-                    return;
-                }
-
-                const data = await res.json();
-                if (!data.data) {
-                    await fetchLocation();
-                    return;
-                }
-
-                setSearchResult({
-                    mapbox_id: data.data.locationId,
-                    place_name: data.data.location.place_name,
-                    address: data.data.location.address,
-                    latitude: data.data.location.latitude,
-                    longitude: data.data.location.longitude,
-                    rating: data.data.rating,
-                    comment: data.data.comment,
-                });
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "Could not fetch reviewed location";
-                Alert.alert("Error", errorMessage);
-                console.error(e);
-            }
-        };
-
-        fetchReviewedLocation();
-    }, [mapbox_id, session_token]);
-
-    return searchResult;
+  return {
+    suggestions,
+    selectedLocation,
+    isLoading,
+    search,
+    getDetails,
+  };
 }
