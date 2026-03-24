@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 
 // This function checks if the "rules" found any issues
 const validateRequest = (req, res, next) => {
@@ -22,5 +22,15 @@ export const submitValidator = [
 export const updateValidator = [
     body('rating')
         .isFloat({ min: 0, max: 5 }).withMessage('Rating must be a number between 0 and 5'),
+    validateRequest
+]
+
+export const getValidator = [
+    query('sortBy')
+        .optional()
+        .isIn(['createdAt', 'rating']).withMessage('Sort must be one of: createdAt, rating'),
+    query('order')
+        .optional()
+        .isIn(['asc', 'desc']).withMessage('Order must be one of: asc, desc'),
     validateRequest
 ]

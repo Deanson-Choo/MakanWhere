@@ -2,9 +2,11 @@ import { getReviewsByUserId, createDBReview, getReviewsByLocationIdByUserId, upd
 
 
 export async function getReviewsByUser(req, res, next) {
-    try {
+    const sortBy = req.query.sortBy || 'createdAt';
+    const order = req.query.order || 'desc';
+    try { 
         const userId = req.user.id;
-        const reviews = await getReviewsByUserId(userId);
+        const reviews = await getReviewsByUserId(userId, sortBy, order);
         res.status(200).json({
             success: true,
             data: reviews

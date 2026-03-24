@@ -26,4 +26,12 @@ First day of documenting current features of project
 
 #### Profile
 
-- Currently has a LogOut Button
+- Currently has a LogOut Button and greets user
+
+### 24/3/2026
+
+#### Home
+
+- Fixed Issue #9
+- Added sorting by rating and date
+- Added order by DESC or ASC

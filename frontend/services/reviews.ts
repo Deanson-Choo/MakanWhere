@@ -3,10 +3,12 @@ import { Alert } from "react-native";
 import { BASE_URL } from "./api";
 import useAuthStore from '@/store/authStore';
 
-export async function fetchReviewsByUser(): Promise<Location[] | undefined> {
+export async function fetchReviewsByUser(sortBy: 'createdAt' | 'rating' = 'createdAt', order: 'asc' | 'desc' = 'desc'): Promise<Location[] | undefined> {
     const token = useAuthStore.getState().token;
     try {
         const url = new URL(`${BASE_URL}/reviews/user`);
+        url.searchParams.append('sortBy', sortBy);
+        url.searchParams.append('order', order);
         const res = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',

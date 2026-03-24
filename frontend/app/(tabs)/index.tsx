@@ -16,16 +16,18 @@ export default function Home() {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('')
     const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+    const [sort, setSort] = useState<'createdAt' | 'rating'>('createdAt');
+    const [isDesc, setIsDesc] = useState(true);
 
     const flatListRef = useRef<FlatList>(null);
 
     useEffect(() => {
         const loadReviews = async () => {
-            const data = await fetchReviewsByUser();
+            const data = await fetchReviewsByUser(sort, isDesc ? 'desc' : 'asc');
             setReviews(data);
         };
         loadReviews();
-    }, []);
+    }, [sort, isDesc]);
 
     // This effect highlights a review from explore.tsx
     useEffect(() => {
@@ -69,12 +71,31 @@ export default function Home() {
         setComment('');
     }
 
+    const handleSort = (sortBy: 'createdAt' | 'rating') => {
+        if (sortBy !== sort) {
+            setIsDesc(true)
+            setSort(sortBy)
+        } else {
+            setIsDesc(isDesc => !isDesc)
+        }
+    }
+
     return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
         <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginVertical: 6, textAlign: 'center' }}>
             Your Reviewed Places
         </Text>
-        
+        <View style={{ flexDirection: 'row', justifyContent: 'center'}}>
+            <TouchableOpacity onPress={() => handleSort('createdAt')} style={{ marginHorizontal: 8, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: sort === 'createdAt' ? '#0b47c9' : '#6B7280', fontWeight: sort === 'createdAt' ? '700' : '400' }}>Sort by Date</Text>
+                {sort === 'createdAt' && <Ionicons name={isDesc ? "arrow-down" : "arrow-up"} size={12} color={sort === 'createdAt' ? '#0b47c9' : '#6B7280'} />}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleSort('rating')} style={{ marginHorizontal: 8, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: sort === 'rating' ? '#0b47c9' : '#6B7280', fontWeight: sort === 'rating' ? '700' : '400' }}>Sort by Rating</Text>
+                {sort === 'rating' && <Ionicons name={isDesc ? "arrow-down" : "arrow-up"} size={12} color={sort === 'rating' ? '#0b47c9' : '#6B7280'} />}
+            </TouchableOpacity>
+
+        </View>
         <FlatList 
             data={reviews}
             ref={flatListRef}

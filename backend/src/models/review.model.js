@@ -1,14 +1,14 @@
 import { query } from '../lib/db.js';
 import { upsertLocation } from './location.model.js';
 
-export async function getReviewsByUserId(userId) {
+export async function getReviewsByUserId(userId, sortBy = 'createdAt', order = 'desc') {
     const text = `
         SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment
         FROM "Review" r
         JOIN "Location" l
         ON r."locationId" = l.mapbox_id
         WHERE r."userId" = $1
-        ORDER BY r."createdAt" DESC
+        ORDER BY r."${sortBy}" ${order.toUpperCase()}
     `;
 
     const values = [userId];
