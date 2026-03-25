@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocationSearch } from '@/hooks/useLocation';
 import { submitReview } from '@/services/reviews';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function Explore() {
     const { mapbox_id, session_token } = useLocalSearchParams<{ mapbox_id: string; session_token: string;}>(); // Came from SearchBox component
@@ -16,6 +17,8 @@ export default function Explore() {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [hasReview, setHasReview] = useState(false);
+
+    const queryClient = useQueryClient();
 
     // Updates selectedLocation
     useEffect(() => {
@@ -61,6 +64,7 @@ export default function Explore() {
         };
 
         await submitReview(payload);
+        queryClient.invalidateQueries({ queryKey: ['reviews'] });
         setHasReview(true);
         setIsEditing(false);
         setRating(0);

@@ -6,13 +6,13 @@ import { Location } from "@/types/location";
 import { useEffect, useState, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 {/* This is the Home screen that shows all reviews by the user. RUD operations are possible here. */}
 
 export default function Home() {
     const { highlightId } = useLocalSearchParams<{ highlightId: string }>();
-    const [reviews, setReviews] = useState<Location[] | undefined>(undefined);
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('')
     const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
@@ -21,13 +21,12 @@ export default function Home() {
 
     const flatListRef = useRef<FlatList>(null);
 
-    useEffect(() => {
-        const loadReviews = async () => {
-            const data = await fetchReviewsByUser(sort, isDesc ? 'desc' : 'asc');
-            setReviews(data);
-        };
-        loadReviews();
-    }, [sort, isDesc]);
+    const queryClient = useQueryClient();
+
+    const { data: reviews, isLoading } = useQuery({
+        queryKey: ['reviews'],
+        queryFn: () => fetchReviewsByUser(sort, isDesc ? 'desc' : 'asc')
+    }) 
 
     // This effect highlights a review from explore.tsx
     useEffect(() => {
@@ -48,7 +47,7 @@ export default function Home() {
 
     const handleDelete = async (id: number) => {
         await deleteReview(id);
-        setReviews(reviews?.filter(review => review.id !== id));
+        queryClient.invalidateQueries({ queryKey: ['reviews'] });
     }
 
     const handleEdit = async (review: Location) => {
@@ -65,10 +64,10 @@ export default function Home() {
             }
             return review;
         });
-        setReviews(updatedReviews);
         setEditingReviewId(null);
         setRating(0);
         setComment('');
+        queryClient.invalidateQueries({ queryKey: ['reviews'] });
     }
 
     const handleSort = (sortBy: 'createdAt' | 'rating') => {

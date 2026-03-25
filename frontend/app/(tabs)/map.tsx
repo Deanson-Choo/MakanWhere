@@ -7,12 +7,12 @@ import { fetchReviewsByUser } from '@/services/reviews';
 import { Ionicons } from '@expo/vector-icons';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import { router } from 'expo-router'
+import { useQuery } from '@tanstack/react-query';
 
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN!);
 
 export default function Map() {
-    const [reviews, setReviews] = useState<Location[] | undefined>(undefined);
     const [selectedLocation ,setSelectedLocation] = useState<Location | undefined>(undefined)
     const [viewState, setViewState] = useState({
         zoom: 9,
@@ -21,12 +21,10 @@ export default function Map() {
     })
 
     // Load Reviews
-    useEffect(() => {
-        const loadReviews = async() => {
-            setReviews(await fetchReviewsByUser())
-        }
-        loadReviews();
-    }, [])
+    const { data: reviews, isLoading } = useQuery({
+        queryKey: ['reviews'],
+        queryFn: () => fetchReviewsByUser('createdAt', 'desc')
+    })
 
     const handleSelection = (review: Location) => {
         setViewState({
