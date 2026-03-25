@@ -9,6 +9,10 @@ export function useLocationSearch() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const clearSelectedLocation = useCallback(() => {
+    setSelectedLocation(null);
+  }, []);
+
   const search = useCallback(async (query: string, sessionToken: string) => {
     if (!query) {
       setSuggestions([]);
@@ -49,5 +53,6 @@ export function useLocationSearch() {
     isLoading,
     search,
     getDetails,
+    clearSelectedLocation,
   };
 }

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native';
 import StarRating from 'react-native-star-rating-widget';
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router';
@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export default function Explore() {
     const { mapbox_id, session_token } = useLocalSearchParams<{ mapbox_id: string; session_token: string;}>(); // Came from SearchBox component
-    const { selectedLocation, getDetails } = useLocationSearch();
+    const { selectedLocation, getDetails, clearSelectedLocation } = useLocationSearch();
 
     const [isEditing, setIsEditing] = useState(false);
     const [rating, setRating] = useState(0);
@@ -69,6 +69,7 @@ export default function Explore() {
         setIsEditing(false);
         setRating(0);
         setComment('');
+        clearSelectedLocation();
     };
 
     return (
