@@ -6,16 +6,17 @@ import { Location } from '../../types/location';
 import { fetchReviewsByUser } from '@/services/reviews';
 import { Ionicons } from '@expo/vector-icons';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useQuery } from '@tanstack/react-query';
 
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN!);
 
 export default function Map() {
+    const { highlightId } = useLocalSearchParams<{ highlightId: string }>();
     const [selectedLocation ,setSelectedLocation] = useState<Location | undefined>(undefined)
     const [viewState, setViewState] = useState({
-        zoom: 9,
+        zoom: 11,
         longitude: 103.8,
         latitude: 1.38
     })
@@ -50,6 +51,19 @@ export default function Map() {
         if (rating >= 2) return '#d19e51';
         return '#d8564f';
     }
+
+    // Handle highlight from Home page
+    useEffect(() => {
+        if (highlightId && reviews && reviews.length > 0) {
+            const review = reviews.find(r => r.id === parseInt(highlightId));
+
+            if (review) {
+                setTimeout(() => {
+                    handleSelection(review);
+                }, 100);
+            }
+        }
+     }, [highlightId, reviews]);
     
     return (
         <View style={styles.page}>
@@ -61,6 +75,7 @@ export default function Map() {
                             zoomLevel: viewState.zoom,
                         }}
                         centerCoordinate={[viewState.longitude, viewState.latitude]}
+                        zoomLevel={viewState.zoom}
                         animationMode={'flyTo'} 
                         animationDuration={1000}                        
                     />

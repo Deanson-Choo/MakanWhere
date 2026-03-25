@@ -5,7 +5,7 @@ import StarRating, { StarRatingDisplay } from "react-native-star-rating-widget";
 import { Location } from "@/types/location";
 import { useEffect, useState, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 
@@ -24,7 +24,7 @@ export default function Home() {
     const queryClient = useQueryClient();
 
     const { data: reviews, isLoading } = useQuery({
-        queryKey: ['reviews'],
+        queryKey: ['reviews', sort, isDesc],
         queryFn: () => fetchReviewsByUser(sort, isDesc ? 'desc' : 'asc')
     }) 
 
@@ -58,12 +58,6 @@ export default function Home() {
 
     const handleUpdate = async (id: number) => {
         await updateReview(id, rating, comment);
-        const updatedReviews = reviews?.map(review => {
-            if (review.id === id) {
-                return { ...review, rating, comment };
-            }
-            return review;
-        });
         setEditingReviewId(null);
         setRating(0);
         setComment('');
@@ -77,6 +71,10 @@ export default function Home() {
         } else {
             setIsDesc(isDesc => !isDesc)
         }
+    }
+
+    const handleRedirect = (id: number) => {
+        router.push( {pathname: "/map" , params: { highlightId: id } });
     }
 
     return (
@@ -131,6 +129,9 @@ export default function Home() {
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => handleDelete(review.id!)}>
                                     <Ionicons name="trash" size={20} color="#EF4444" />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleRedirect(review.id!)}>
+                                    <Ionicons name="location" size={20} color="#0B47C9" />
                                 </TouchableOpacity>
                             </View>
                         </View>
