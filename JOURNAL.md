@@ -35,3 +35,10 @@ First day of documenting current features of project
 - Fixed Issue #9
 - Added sorting by rating and date
 - Added order by DESC or ASC
+
+### 25/3/2026
+
+- Added Tanstack query to ensure all pages are in sync for reviews
+- Clear selection on submission in Explore Page
+- In home page, now it shows a link to the review on the map
+- Fixed #5, #6, #7, #10
