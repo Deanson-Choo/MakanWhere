@@ -19,6 +19,7 @@ mapBoxRouter.get('/locations/search', async(req, res, next) => {
         url.searchParams.append("access_token", MAPBOX_TOKEN);
         url.searchParams.append("types", "poi");
         url.searchParams.append("proximity", "ip");
+        url.searchParams.append("poi_category", "restaurant,food,food_and_drink,winery,bar,cafe,bakery");
         url.searchParams.append("limit", "10");
 
         const response = await fetch(url.toString());
@@ -78,5 +79,53 @@ mapBoxRouter.get('/locations/:id', async(req, res, next) => {
         next(error);
     }
 });
+
+// Put somewhere next time:
+// Japanese: 'japanese_restaurant', 'sushi_restaurant', 'ramen_restaurant'
+// Chinese: 'chinese_restaurant'
+// Korean: 'korean_restaurant'
+// Italian: 'italian_restaurant', 'pizza_restaurant'
+// Indian: 'indian_restaurant'
+// Mexician: 'mexican_restaurant'
+// Asian: 'asian_restaurant'
+// Thai: 'thai_restaurant'
+// Vietnamese: 'vietnamese_restaurant'
+// Indonesian: 'indonesian_restaurant'
+
+mapBoxRouter.get('/locations/category/:category_id', async(req, res, next) => {
+    try {
+        const { category_id } = req.params;
+        const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
+
+        if (!category_id || !MAPBOX_TOKEN) {
+            const err = new Error('Cannot Fetch Locations By Category');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        const url = new URL(`https://api.mapbox.com/search/searchbox/v1/category/${category_id}`);
+        url.searchParams.append("access_token", MAPBOX_TOKEN);
+        url.searchParams.append("proximity", "ip");
+        url.searchParams.append("limit", "10");
+
+
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        if (!response.ok || !data.features || data.features.length === 0) {
+            const err = new Error('Cannot Fetch Locations By Category');
+            err.statusCode = response.status;
+            return next(err);
+        }
+
+        res.status(200).json({
+            success: true,
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
 
 export default mapBoxRouter;
