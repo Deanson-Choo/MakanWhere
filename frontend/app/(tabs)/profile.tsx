@@ -21,7 +21,7 @@ export default function Profile() {
                     <Image 
                     source={{ uri: `https://api.dicebear.com/9.x/personas/svg?seed=${user?.id}` }}
                     style={{ width: 100, height: 100 }} 
-                    contentFit="cover"
+                    contentFit ="cover"
                     />
                 </View>
 

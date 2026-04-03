@@ -7,4 +7,5 @@ export type Location = {
     longitude: number;
     rating?: number;
     comment?: string;
+    image_url?: string;
 }

@@ -53,7 +53,7 @@ export async function fetchReviewsByUserByLocation(mapbox_id: string): Promise<L
     }
 }
 
-type ReviewPayload = {
+export type ReviewPayload = {
     mapbox_id: string;
     rating: number;
     comment: string;
@@ -61,6 +61,7 @@ type ReviewPayload = {
     address: string;
     latitude: number;
     longitude: number;
+    image?: string;
 }
 
 export async function submitReview(payload: ReviewPayload) {

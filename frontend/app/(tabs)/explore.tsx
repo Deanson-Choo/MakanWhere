@@ -6,8 +6,11 @@ import SearchBox from '@/components/SearchBox';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocationSearch } from '@/hooks/useLocation';
-import { submitReview } from '@/services/reviews';
+import { submitReview, ReviewPayload } from '@/services/reviews';
 import { useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+
+import * as ImagePicker from "expo-image-picker";
 
 export default function Explore() {
     const { mapbox_id, session_token } = useLocalSearchParams<{ mapbox_id: string; session_token: string;}>(); // Came from SearchBox component
@@ -17,6 +20,7 @@ export default function Explore() {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [hasReview, setHasReview] = useState(false);
+    const [image, setImage] = useState<string | null>(null);
 
     const queryClient = useQueryClient();
 
@@ -53,7 +57,7 @@ export default function Explore() {
     const handleSubmit = async () => {
         if (!selectedLocation) return;
         
-        const payload = {
+        const payload: ReviewPayload = {
             mapbox_id: selectedLocation.mapbox_id,
             rating,
             comment,
@@ -61,6 +65,7 @@ export default function Explore() {
             address: selectedLocation.address,
             latitude: selectedLocation.latitude,
             longitude: selectedLocation.longitude,
+            image: image ?? undefined,
         };
 
         await submitReview(payload);
@@ -69,8 +74,39 @@ export default function Explore() {
         setIsEditing(false);
         setRating(0);
         setComment('');
+        setImage(null);
         clearSelectedLocation();
     };
+
+    const ensureImagePermission = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert('Permission to access media library is required!');
+            return false;
+        }
+        return true;
+    }
+
+    const pickImage = async () => {
+        const hasPermission = await ensureImagePermission();
+        if (!hasPermission) return;
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.3,
+            base64: true
+        });
+
+        if (result.canceled || !result.assets?.length) return;
+
+        const asset = result.assets[0];
+        const mimeType = asset.mimeType ?? 'image/jpeg';
+        const base64Uri = `data:${mimeType};base64,${asset.base64}`;
+        setImage(base64Uri);
+    }
+
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -96,6 +132,19 @@ export default function Explore() {
                             (
                             <View style={styles.reviewCard}>
                                 <Text style={styles.sectionTitle}>Your Review</Text>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Image</Text>
+                                    <View style={styles.imagePickerBox}>
+                                    {image ? (
+                                        <Image source={{ uri: image }} style={styles.previewImage} />
+                                    ) : (
+                                        <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+                                        <Ionicons name="image-outline" size={28} color="#64748B" />
+                                        <Text style={styles.imagePickerText}>Select an image</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                                </View>
                                 <Ionicons name="close-outline" size={24} style={styles.closeIcon} onPress={cancelEditing} />
                                 <StarRating rating={rating} starSize={20} maxStars={5} onChange={setRating} />
                                 <TextInput
@@ -208,5 +257,37 @@ const styles = StyleSheet.create({
         top: 12,
         right: 12,
         color: '#020202',
-    }
+    },
+    imagePickerBox: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    height: 180,
+    backgroundColor: '#E2E8F0'
+  },
+  imagePickerButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  },
+  imagePickerText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#475569'
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%'
+  },
+  inputGroup: {
+    marginBottom: 14
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 8
+  },
 });

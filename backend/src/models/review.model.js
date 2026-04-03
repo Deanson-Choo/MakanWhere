@@ -3,7 +3,7 @@ import { upsertLocation } from './location.model.js';
 
 export async function getReviewsByUserId(userId, sortBy = 'createdAt', order = 'desc') {
     const text = `
-        SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment
+        SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment, r.image_url
         FROM "Review" r
         JOIN "Location" l
         ON r."locationId" = l.mapbox_id
@@ -18,7 +18,7 @@ export async function getReviewsByUserId(userId, sortBy = 'createdAt', order = '
 
 export async function getReviewsByLocationIdByUserId(userId, mapbox_id) {
     const text = `
-        SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment
+        SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment, r.image_url
         FROM "Review" r
         JOIN "Location" l
         ON r."locationId" = l.mapbox_id
@@ -30,18 +30,18 @@ export async function getReviewsByLocationIdByUserId(userId, mapbox_id) {
     return rows[0]; // Return the single review for this location by this user
 }
 
-export async function createDBReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude) {
+export async function createDBReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude, imageUrl) {
     // First, ensure the location exists in the Location table
     await upsertLocation(mapbox_id, place_name, address, latitude, longitude);
 
     // Now insert the review
     const text = `
-        INSERT INTO "Review" ("userId", rating, comment, "locationId")
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO "Review" ("userId", rating, comment, "locationId", image_url)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
     `;
     
-    const values = [userId, rating, comment, mapbox_id]; 
+    const values = [userId, rating, comment, mapbox_id, imageUrl]; 
     const { rows } = await query(text, values);
     return rows[0]; // Return the newly created review
 }

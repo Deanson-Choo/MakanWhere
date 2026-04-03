@@ -1,5 +1,5 @@
 import { getReviewsByUserId, createDBReview, getReviewsByLocationIdByUserId, updateDBReview, getOwnerOfReview, deleteDBReview} from "../models/review.model.js";
-
+import cloudinary from "../lib/cloudinary.js";
 
 export async function getReviewsByUser(req, res, next) {
     const sortBy = req.query.sortBy || 'createdAt';
@@ -81,8 +81,18 @@ export async function deleteReview(req, res, next) {
 export async function createReview(req, res, next) {
     try {
         const userId = req.user.id;
-        const { mapbox_id, rating, comment, place_name, address, latitude, longitude } = req.body;
-        const review = await createDBReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude);
+        const { mapbox_id, rating, comment, place_name, address, latitude, longitude, image } = req.body;
+
+        let imageUrl = null;
+        if (image) {
+            // Upload image to Cloudinary 
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+                folder: 'makanwhere',
+            });
+            imageUrl = uploadResponse.secure_url;
+        }
+
+        const review = await createDBReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude, imageUrl);
         res.status(201).json({
             success: true,
             data: review
