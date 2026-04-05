@@ -48,3 +48,17 @@ export async function createUser(username, email, hashedPassword) {
     return rows[0]; // Return the newly created user
 }
 
+export async function updateUser(id, username, email, hashedPassword) {
+    const text = `
+        UPDATE "User"
+        SET username = COALESCE($1, username),
+            email = COALESCE($2, email),
+            password = COALESCE($3, password)
+        WHERE id = $4
+        RETURNING id, username, email
+    `;
+
+    const values = [username ?? null, email ?? null, hashedPassword ?? null, id];
+    const { rows } = await query(text, values);
+    return rows[0]; // Return the updated user
+}

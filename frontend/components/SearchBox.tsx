@@ -42,6 +42,7 @@ export default function SearchBox() {
                 placeholder="Input The Restaurant's Name"
                 value={query}
                 onChangeText={setQuery}
+                placeholderTextColor="#9CA3AF"
             />
             {suggestions.length > 0 && (
                 <FlatList

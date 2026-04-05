@@ -42,3 +42,8 @@ First day of documenting current features of project
 - Clear selection on submission in Explore Page
 - In home page, now it shows a link to the review on the map
 - Fixed #5, #6, #7, #10
+
+### 5/4/2026
+- Fixed #15, #16, #17, #18
+- Users can now add images
+- Users can now edit their profile

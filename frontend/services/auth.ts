@@ -28,6 +28,12 @@ type AuthError = {
     errors?: ValidationError[];
 }
 
+type UpdateProfileResponse = {
+    success: boolean;
+    message: string;
+    data: UserData;
+}
+
 export async function login(email: string, password: string) {
     try {
         const res = await fetch(`${BASE_URL}/auth/login`, {
@@ -67,6 +73,35 @@ export async function register(email: string, username: string, password: string
         useAuthStore.getState().signup(data, token);
     } catch (error) {
         Alert.alert('Registration Failed', (error as Error).message);
+    }
+}
+
+export async function updateProfile(email?: string, username?: string, password?: string) {
+    const token = useAuthStore.getState().token;
+    try {
+        const url = new URL(`${BASE_URL}/auth/profile`);
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ email, username, password }),
+        });
+
+        const body = await res.json() as UpdateProfileResponse | AuthError;
+
+        if (!body.success) {
+            Alert.alert('Fetch Failed', (body as AuthError).message);
+            return;
+        }
+
+        const { data } = body as UpdateProfileResponse;
+        useAuthStore.getState().updateProfile(data);
+
+        Alert.alert('Profile Updated', 'Your profile has been updated successfully.');
+    } catch {
+        Alert.alert('Fetch Failed', 'An unexpected error occurred.');
     }
 }
 

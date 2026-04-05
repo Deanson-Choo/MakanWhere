@@ -117,7 +117,7 @@ export default function Home() {
                             <View style={{ flex: 1, marginRight: 12 }}> 
                                 <Text style={styles.placeName}>{review.place_name}</Text>
                                 <Text style={styles.address}>{review.address}</Text>
-                                {review.image_url && <Image source={{ uri: review.image_url }} style={{ width: '100%', height: 150, borderRadius: 10, marginTop: 8 }} contentFit="cover" />}
+                                {review.image_url && <Image source={{ uri: review.image_url }} style={{ width: '100%', height: 150, borderRadius: 10, marginVertical: 8 }} contentFit="cover" />}
                                 <StarRatingDisplay rating={review.rating ?? 0} starSize={20} maxStars={5}/>
                                 <Text style={styles.displayCommentBox} numberOfLines={4}>
                                     {review.comment}

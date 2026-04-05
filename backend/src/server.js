@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // This line parses incoming JSON requests and puts the parsed data in req.body
+app.use(express.json({ limit: '10mb' })); 
 
 // We define routers here
 app.use('/api/auth', authRouter);

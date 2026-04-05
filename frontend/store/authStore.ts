@@ -10,6 +10,7 @@ type AuthState = {
     login: (userData: UserData, token: string) => void;
     logout: () => void;
     signup: (userData: UserData, token: string) => void;
+    updateProfile: (userData: UserData) => void;
 };
 
 const useAuthStore = create<AuthState>()(
@@ -42,6 +43,12 @@ const useAuthStore = create<AuthState>()(
           isAuthenticated: true 
         });
       },
+
+      updateProfile: (userData: UserData) => {
+        set({
+          user: userData
+        })
+      }
     }),
     {
       name: 'auth-storage', 

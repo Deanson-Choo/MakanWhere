@@ -46,3 +46,22 @@ export const loginValidator = [
 
   validateRequest
 ];
+
+export const updateProfileValidator = [
+  body('username')
+    .optional()
+    .trim()
+    .isLength({ min: 2 }).withMessage('Username must be at least 2 characters'),
+
+  body('email')
+    .optional()
+    .trim()
+    .isEmail().withMessage('Email format is invalid')
+    .normalizeEmail(),
+
+  body('password')
+    .optional()
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+
+  validateRequest
+];

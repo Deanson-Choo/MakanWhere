@@ -1,5 +1,5 @@
-import {View, StyleSheet, Alert, TouchableOpacity, Text} from 'react-native';
-import Mapbox, { MapView, Camera, MarkerView } from "@rnmapbox/maps";
+import {View, StyleSheet, TouchableOpacity, Text} from 'react-native';
+import Mapbox, { MapView, Camera, PointAnnotation } from "@rnmapbox/maps";
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useState, useEffect } from 'react';
 import { Location } from '../../types/location';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import { router, useLocalSearchParams } from 'expo-router'
 import { useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN!);
@@ -80,11 +81,16 @@ export default function Map() {
                         animationDuration={1000}                        
                     />
                     {reviews?.map((review) => (
-                        <MarkerView key = {review.id} coordinate = {[review.longitude, review.latitude]}>
-                            <TouchableOpacity onPress={() => handleSelection(review)}>
+                        <PointAnnotation
+                            key={`${review.id}-${selectedLocation?.id === review.id ? 'selected' : 'default'}`} // Remount when selected to trigger animation
+                            id={String(review.id)}
+                            coordinate={[review.longitude, review.latitude]}
+                            onSelected={() => handleSelection(review)}
+                        >
+                            <View>
                                 <Ionicons name="location-sharp" size={30} color={getColor(review.rating!, review.id!)} />
-                            </TouchableOpacity>
-                        </MarkerView>
+                            </View>
+                        </PointAnnotation>
                     ))}
                 </MapView>
                 <SafeAreaView style={styles.safeArea}>
@@ -92,11 +98,8 @@ export default function Map() {
                         <View style={styles.modal}>
                             <Text style={styles.title}>{selectedLocation.place_name}</Text>
                             <Text style={styles.address}>{selectedLocation.address}</Text>
-                            <StarRatingDisplay
-                                rating={selectedLocation.rating!}
-                                maxStars={5}
-                                starSize={20}
-                            />
+                            {selectedLocation.image_url && <Image source={{ uri: selectedLocation.image_url }} style={{ width: '100%', height: 150, borderRadius: 10, marginVertical: 8 }} contentFit="cover" />}
+                            <StarRatingDisplay rating={selectedLocation.rating!} starSize={20} maxStars={5}/>
                             <Text style={styles.comment}>{selectedLocation.comment}</Text>
                             <Ionicons name="close" size={24} style={styles.closeIcon} onPress={() => setSelectedLocation(undefined)} />
                             <TouchableOpacity style={styles.primaryButton} onPress={() => handleRedirect(selectedLocation.id!)}>
@@ -157,4 +160,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 15,
     },
+    displayCommentBox: {
+        borderRadius: 10,
+        backgroundColor: '#FFFFFF',
+        fontSize: 14,
+        color: '#111827',
+        textAlignVertical: 'top',
+        padding: 8,
+        marginTop: 8,
+    }
 });
