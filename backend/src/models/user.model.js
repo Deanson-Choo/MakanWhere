@@ -1,6 +1,15 @@
 import { query } from '../lib/db.js';
 
-export async function findUserByEmail(email) {
+
+export const UserModel = {
+    findUserByEmail,
+    findUserByUsername,
+    findUserById,
+    createUser,
+    updateUser
+};
+
+async function findUserByEmail(email) {
     const text = `
         SELECT *
         FROM "User"
@@ -12,7 +21,7 @@ export async function findUserByEmail(email) {
     return rows[0]; // Should allow have only one user with a given email, so return the first row
 }
 
-export async function findUserByUsername(username) {
+async function findUserByUsername(username) {
     const text = `
         SELECT *
         FROM "User"
@@ -24,7 +33,7 @@ export async function findUserByUsername(username) {
     return rows[0]; // Should allow have only one user with a given username, so return the first row
 }
 
-export async function findUserById(id) {
+async function findUserById(id) {
     const text = `
         SELECT *
         FROM "User"
@@ -36,7 +45,7 @@ export async function findUserById(id) {
     return rows[0]; // Should allow have only one user with a given id, so return the first row
 }
 
-export async function createUser(username, email, hashedPassword) {
+async function createUser(username, email, hashedPassword) {
     const text = `
         INSERT INTO "User" (username, email, password)
         VALUES ($1, $2, $3)
@@ -48,7 +57,7 @@ export async function createUser(username, email, hashedPassword) {
     return rows[0]; // Return the newly created user
 }
 
-export async function updateUser(id, username, email, hashedPassword) {
+async function updateUser(id, username, email, hashedPassword) {
     const text = `
         UPDATE "User"
         SET username = COALESCE($1, username),

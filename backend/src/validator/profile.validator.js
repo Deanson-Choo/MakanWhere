@@ -1,0 +1,33 @@
+import { body, validationResult } from 'express-validator';
+
+// This function checks if the "rules" found any issues
+const validateRequest = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) { // Send to global error handler
+        const err = new Error('Validation failed');
+        err.statusCode = 400;
+        err.details = errors.array();
+        return next(err);
+    }
+    // If no errors, proceed to the controller
+    next();
+};
+
+export const updateProfileValidator = [
+  body('username')
+    .optional()
+    .trim()
+    .isLength({ min: 2 }).withMessage('Username must be at least 2 characters'),
+
+  body('email')
+    .optional()
+    .trim()
+    .isEmail().withMessage('Email format is invalid')
+    .normalizeEmail(),
+
+  body('password')
+    .optional()
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+
+  validateRequest
+];

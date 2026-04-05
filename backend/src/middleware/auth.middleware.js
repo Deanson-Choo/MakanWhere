@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { findUserById } from '../models/user.model.js';
+import { UserModel } from '../models/user.model.js';
 
 export async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -14,7 +14,7 @@ export async function authMiddleware(req, res, next) {
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-  const user = await findUserById(decoded.id);
+  const user = await UserModel.findUserById(decoded.id);
   if (!user) {
     const err = new Error('User no longer exists');
     err.statusCode = 401;

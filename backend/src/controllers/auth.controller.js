@@ -1,27 +1,21 @@
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
-import { findUserByEmail, findUserByUsername, createUser, updateUser } from '../models/user.model.js';
+import { UserModel } from '../models/user.model.js';
 
 
 export async function register(req, res, next) {
     try {
         const { username, email, password } = req.body;
 
-        // Check if the email is already registered
-        let user = await findUserByEmail(email);
-        if (user) {
-            // Send to global error handler
+        if (await UserModel.findUserByEmail(email)) {
             const err = new Error('Email is already registered');
-            err.statusCode = 409;
+            err.statusCode = 400;
             return next(err);
         }
-
-        // Check if the username is already taken
-        user = await findUserByUsername(username);
-        if (user) {
-            // Send to global error handler
+        
+        if (await UserModel.findUserByUsername(username)) {
             const err = new Error('Username is already taken');
-            err.statusCode = 409;
+            err.statusCode = 400;
             return next(err);
         }
 
@@ -30,10 +24,12 @@ export async function register(req, res, next) {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Save the new user to the database
-        const newUser = await createUser(username, email, hashedPassword);
+        const newUser = await UserModel.createUser(username, email, hashedPassword);
 
         // Generate a JWT token for the user
         const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        // TODO: JWT Refresh Token 
 
         const data = {
             id: newUser.id,
@@ -47,7 +43,7 @@ export async function register(req, res, next) {
             token
         });
     } catch (err) {
-        next(err); // Sends ANY unexpected error (DB down, JWT secret missing, etc.) to the global error handler
+        next(err); 
     }
 }
 
@@ -56,7 +52,7 @@ export async function login(req, res, next) {
         const { email, password } = req.body;
 
         // Find the user by email
-        const user = await findUserByEmail(email);
+        const user = await UserModel.findUserByEmail(email);
         if (!user) {
             // Send to global error handler
             const err = new Error('Invalid email or password');
@@ -76,6 +72,8 @@ export async function login(req, res, next) {
         // Generate a JWT token for the user
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+        // TODO: JWT Refresh Token
+
         const data = {
             id: user.id,
             username: user.username,
@@ -88,56 +86,6 @@ export async function login(req, res, next) {
             token
         });
     } catch (err) {
-        next(err); // Sends ANY unexpected error (DB down, JWT secret missing, etc.) to the global error handler
-    }
-}
-
-export async function updateProfile(req, res, next) {
-    try {
-        const { username, email, password } = req.body;
-        const userId = req.user.id;
-
-        // Check if the email is already registered to another user
-        if (email) {
-            const user = await findUserByEmail(email);
-            if (user && user.id !== userId) {
-                const err = new Error('Email is already registered');
-                err.statusCode = 409;
-                return next(err);
-            }
-        }
-
-        // Check if the username is already taken
-        if (username) {
-            const user = await findUserByUsername(username);
-            if (user && user.id !== userId) {
-                const err = new Error('Username is already taken');
-                err.statusCode = 409;
-                return next(err);
-            }
-        }
-
-        // Hash the password only if a new one was provided
-        let hashedPassword = null;
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            hashedPassword = await bcrypt.hash(password, salt);
-        }
-
-        // Save the updated user to the database
-        const updatedUser = await updateUser(userId, username, email, hashedPassword);
-
-        const data = {
-            id: updatedUser.id,
-            username: updatedUser.username,
-            email: updatedUser.email
-        }
-
-        res.status(200).json({
-            success: true,
-            data
-        });
-    } catch (err) {
-        next(err); // Sends ANY unexpected error (DB down, JWT secret missing, etc.) to the global error handler
+        next(err); 
     }
 }

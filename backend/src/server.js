@@ -1,12 +1,12 @@
 import express from 'express'; 
-import cors from 'cors'; // This line imports the CORS middleware, which allows your server to handle cross-origin requests
-import "dotenv/config" // This line loads environment variables from a .env file into process.env
+import cors from 'cors'; 
+import "dotenv/config" 
 
 import authRouter from './routes/auth.routes.js';
 import mapBoxRouter from './routes/mapBox.routes.js';
 import reviewRouter from './routes/review.routes.js';
+import profileRouter from './routes/profile.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
-
 
 const PORT = process.env.PORT || 3000; 
 
@@ -17,6 +17,7 @@ app.use(express.json({ limit: '10mb' }));
 
 // We define routers here
 app.use('/api/auth', authRouter);
+app.use('/api/profile', profileRouter);
 app.use('/api/mapbox', mapBoxRouter); 
 app.use('/api/reviews', reviewRouter);
 
