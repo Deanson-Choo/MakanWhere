@@ -1,7 +1,7 @@
 import { query } from '../lib/db.js';
 import { upsertLocation } from './location.model.js';
 
-export async function getReviewsByUserId(userId, sortBy = 'createdAt', order = 'desc') {
+export async function getReviews(userId, sortBy = 'createdAt', order = 'desc') {
     const text = `
         SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment, r.image_url
         FROM "Review" r
@@ -16,7 +16,7 @@ export async function getReviewsByUserId(userId, sortBy = 'createdAt', order = '
     return rows; // Return all reviews by the user
 }
 
-export async function getReviewsByLocationIdByUserId(userId, mapbox_id) {
+export async function getReviewsByLocation(userId, mapbox_id) {
     const text = `
         SELECT r.id, l.mapbox_id, l.place_name, l.address, l.latitude, l.longitude, r.rating, r.comment, r.image_url
         FROM "Review" r
@@ -30,7 +30,7 @@ export async function getReviewsByLocationIdByUserId(userId, mapbox_id) {
     return rows[0]; // Return the single review for this location by this user
 }
 
-export async function createDBReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude, imageUrl) {
+export async function createReview(userId, mapbox_id, rating, comment, place_name, address, latitude, longitude, imageUrl) {
     // First, ensure the location exists in the Location table
     await upsertLocation(mapbox_id, place_name, address, latitude, longitude);
 
@@ -46,18 +46,18 @@ export async function createDBReview(userId, mapbox_id, rating, comment, place_n
     return rows[0]; // Return the newly created review
 }
 
-export async function getOwnerOfReview(reviewId) {
+export async function getReviewById(reviewId) {
     const text = `
-        SELECT "userId"
+        SELECT *
         FROM "Review"
         WHERE id = $1
     `;
     const values = [reviewId];
     const { rows } = await query(text, values);
-    return rows[0]?.userId; // Return the userId of the review owner
+    return rows[0]; // Return the review with the specified ID
 }
 
-export async function updateDBReview(reviewId, rating, comment) {
+export async function updateReview(reviewId, rating, comment) {
     const text = `
         UPDATE "Review"
         SET rating = $1, comment = $2
@@ -69,7 +69,7 @@ export async function updateDBReview(reviewId, rating, comment) {
     return rows[0] // Return the updated review
 }
 
-export async function deleteDBReview(reviewId) {
+export async function deleteReview(reviewId) {
     const text = `
         DELETE FROM "Review"
         WHERE id = $1

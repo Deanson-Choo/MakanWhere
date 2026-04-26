@@ -8,10 +8,16 @@ export default function SignUp() {
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         if (email && username && password) {
-            register(email, username, password);
+            setIsLoading(true);
+            try {
+                await register(email, username, password);
+            } finally {
+                setIsLoading(false);
+            }
         } else {
             Alert.alert("Error", "Please fill in all fields.");
         }
@@ -30,7 +36,7 @@ export default function SignUp() {
                         <Text style={styles.label}>Email</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="example@gmail.com"
+                            placeholder="mkwhere@gmail.com"
                             placeholderTextColor="#9CA3AF"
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -43,7 +49,7 @@ export default function SignUp() {
                         <Text style={styles.label}>Username</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="jeff152"
+                            placeholder="mkwhere123"
                             placeholderTextColor="#9CA3AF"
                             autoCapitalize="none"
                             value={username}
@@ -63,8 +69,8 @@ export default function SignUp() {
                         />
                     </View>
 
-                    <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-                        <Text style={styles.buttonText}>Sign Up</Text>
+                    <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
+                        <Text style={styles.buttonText}>{isLoading ? 'Signing up...' : 'Sign Up'}</Text>
                     </TouchableOpacity>
                 </View>
 

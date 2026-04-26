@@ -1,15 +1,6 @@
 import { query } from '../lib/db.js';
 
-
-export const UserModel = {
-    findUserByEmail,
-    findUserByUsername,
-    findUserById,
-    createUser,
-    updateUser
-};
-
-async function findUserByEmail(email) {
+export async function findUserByEmail(email) {
     const text = `
         SELECT *
         FROM "User"
@@ -21,7 +12,7 @@ async function findUserByEmail(email) {
     return rows[0]; // Should allow have only one user with a given email, so return the first row
 }
 
-async function findUserByUsername(username) {
+export async function findUserByUsername(username) {
     const text = `
         SELECT *
         FROM "User"
@@ -33,7 +24,7 @@ async function findUserByUsername(username) {
     return rows[0]; // Should allow have only one user with a given username, so return the first row
 }
 
-async function findUserById(id) {
+export async function findUserById(id) {
     const text = `
         SELECT *
         FROM "User"
@@ -45,7 +36,7 @@ async function findUserById(id) {
     return rows[0]; // Should allow have only one user with a given id, so return the first row
 }
 
-async function createUser(username, email, hashedPassword) {
+export async function createUser(username, email, hashedPassword) {
     const text = `
         INSERT INTO "User" (username, email, password)
         VALUES ($1, $2, $3)
@@ -57,7 +48,7 @@ async function createUser(username, email, hashedPassword) {
     return rows[0]; // Return the newly created user
 }
 
-async function updateUser(id, username, email, hashedPassword) {
+export async function updateUser(id, username, email, hashedPassword) {
     const text = `
         UPDATE "User"
         SET username = COALESCE($1, username),
@@ -70,4 +61,14 @@ async function updateUser(id, username, email, hashedPassword) {
     const values = [username ?? null, email ?? null, hashedPassword ?? null, id];
     const { rows } = await query(text, values);
     return rows[0]; // Return the updated user
+}
+
+export async function deleteUser(id) {
+    const text = `
+        DELETE FROM "User"
+        WHERE id = $1
+    `;
+
+    const values = [id];
+    await query(text, values);
 }

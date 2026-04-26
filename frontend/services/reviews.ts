@@ -3,10 +3,10 @@ import { Alert } from "react-native";
 import { BASE_URL } from "./api";
 import useAuthStore from '@/store/authStore';
 
-export async function fetchReviewsByUser(sortBy: 'createdAt' | 'rating' = 'createdAt', order: 'asc' | 'desc' = 'desc'): Promise<Location[] | undefined> {
+export async function fetchReviewsByUser(sortBy: 'createdAt' | 'rating' = 'createdAt', order: 'asc' | 'desc' = 'desc'): Promise<Location[]> {
     const token = useAuthStore.getState().token;
     try {
-        const url = new URL(`${BASE_URL}/reviews/user`);
+        const url = new URL(`${BASE_URL}/reviews`);
         url.searchParams.append('sortBy', sortBy);
         url.searchParams.append('order', order);
         const res = await fetch(url, {
@@ -20,19 +20,20 @@ export async function fetchReviewsByUser(sortBy: 'createdAt' | 'rating' = 'creat
 
         if (!body.success) {
             Alert.alert('Fetch Failed', body.message);
-            return;
+            return [];
         }
 
         return body.data as Location[];
     } catch {
         Alert.alert('Fetch Failed', 'An unexpected error occurred.');
+        return [];
     }
 }
 
 export async function fetchReviewsByUserByLocation(mapbox_id: string): Promise<Location | undefined> {
     const token = useAuthStore.getState().token;
     try {
-        const url = new URL(`${BASE_URL}/reviews/user/location/${mapbox_id}`);
+        const url = new URL(`${BASE_URL}/reviews/location/${mapbox_id}`);
         const res = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
@@ -67,7 +68,7 @@ export type ReviewPayload = {
 export async function submitReview(payload: ReviewPayload) {
     const token = useAuthStore.getState().token;
     try {
-        const url = new URL(`${BASE_URL}/reviews/user`);
+        const url = new URL(`${BASE_URL}/reviews`);
         const res = await fetch(url, {
             method: 'POST',
             headers: {

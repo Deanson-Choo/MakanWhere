@@ -34,6 +34,10 @@ type UpdateProfileResponse = {
     data: UserData;
 }
 
+type DeleteProfileResponse = {
+    success: boolean;
+}
+
 export async function login(email: string, password: string) {
     try {
         const res = await fetch(`${BASE_URL}/auth/login`, {
@@ -79,7 +83,7 @@ export async function register(email: string, username: string, password: string
 export async function updateProfile(email?: string, username?: string, password?: string) {
     const token = useAuthStore.getState().token;
     try {
-        const url = new URL(`${BASE_URL}/auth/profile`);
+        const url = new URL(`${BASE_URL}/profile`);
         const res = await fetch(url, {
             method: 'PUT',
             headers: {
@@ -102,6 +106,32 @@ export async function updateProfile(email?: string, username?: string, password?
         Alert.alert('Profile Updated', 'Your profile has been updated successfully.');
     } catch {
         Alert.alert('Fetch Failed', 'An unexpected error occurred.');
+    }
+}
+
+export async function deleteProfile() {
+    const token = useAuthStore.getState().token;
+    try {
+        const url = new URL(`${BASE_URL}/profile`);
+        const res = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+
+        const body = await res.json() as DeleteProfileResponse | AuthError;
+
+        if (!body.success) {
+            Alert.alert('Delete Failed', (body as AuthError).message);
+            return;
+        }
+
+        useAuthStore.getState().logout();
+
+    } catch {
+        Alert.alert('Delete Failed', 'An unexpected error occurred while trying to delete your profile.');
     }
 }
 

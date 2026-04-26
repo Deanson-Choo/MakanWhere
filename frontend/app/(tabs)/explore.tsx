@@ -21,6 +21,7 @@ export default function Explore() {
     const [comment, setComment] = useState('');
     const [hasReview, setHasReview] = useState(false);
     const [image, setImage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const queryClient = useQueryClient();
 
@@ -68,14 +69,19 @@ export default function Explore() {
             image: image ?? undefined,
         };
 
-        await submitReview(payload);
-        queryClient.invalidateQueries({ queryKey: ['reviews'] });
-        setHasReview(true);
-        setIsEditing(false);
-        setRating(0);
-        setComment('');
-        setImage(null);
-        clearSelectedLocation();
+        setIsLoading(true);
+        try {
+            await submitReview(payload);
+            queryClient.invalidateQueries({ queryKey: ['reviews'] });
+            setHasReview(true);
+            setIsEditing(false);
+            setRating(0);
+            setComment('');
+            setImage(null);
+            clearSelectedLocation();
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const ensureImagePermission = async () => {
@@ -106,7 +112,6 @@ export default function Explore() {
         const base64Uri = `data:${mimeType};base64,${asset.base64}`;
         setImage(base64Uri);
     }
-
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -156,8 +161,8 @@ export default function Explore() {
                                     multiline
                                     textAlignVertical="top"
                                 />
-                                <TouchableOpacity style={styles.submitButton} onPress={() => handleSubmit()}>
-                                    <Text style={styles.primaryButtonText}>Submit</Text>
+                                <TouchableOpacity style={styles.submitButton} onPress={() => handleSubmit()} disabled={isLoading}>
+                                    <Text style={styles.primaryButtonText}>{isLoading ? 'Submitting...' : 'Submit'}</Text>
                                 </TouchableOpacity>
                             </View> 
                             ) : (

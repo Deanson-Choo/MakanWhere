@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/user.model.js';
+import * as UserModel from '../models/user.model.js';
 
 export async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    const err = new Error('Unauthorized');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const err = new Error('Invalid or missing token');
     err.statusCode = 401;
     return next(err);
   }

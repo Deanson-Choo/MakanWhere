@@ -7,10 +7,16 @@ import { useState } from "react";
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (email && password) {
-            login(email, password);
+            setIsLoading(true);
+            try {
+                await login(email, password);
+            } finally {
+                setIsLoading(false);
+            }
         } else {
             Alert.alert("Error", "Please enter both email and password.");
         }
@@ -50,8 +56,8 @@ export default function LoginPage() {
                         />
                     </View>
 
-                    <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                        <Text style={styles.buttonText}>Log in</Text>
+                    <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+                        <Text style={styles.buttonText}>{isLoading ? 'Logging in...' : 'Log in'}</Text>
                     </TouchableOpacity>
                 </View>
 

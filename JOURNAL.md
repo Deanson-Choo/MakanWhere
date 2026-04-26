@@ -47,3 +47,15 @@ First day of documenting current features of project
 - Fixed #15, #16, #17, #18
 - Users can now add images
 - Users can now edit their profile
+
+### 26/4/2026
+#### Backend Testing
+- Added and validated endpoints notFound handler
+- auth/register endpoint, tested validation and the endpoint itself
+- auth/login endpoint, tested validation and incorrect password
+- profile endpoint, tested update and delete profile
+- reviews endpoint , tested get , update, delete
+
+#### Frontend
+- Added profile deletion
+- Added loading UI for better feedback

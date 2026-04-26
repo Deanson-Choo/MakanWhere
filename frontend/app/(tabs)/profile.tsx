@@ -1,4 +1,4 @@
-import { Text, StyleSheet, TouchableOpacity, View, TextInput } from "react-native";  
+import { Text, StyleSheet, TouchableOpacity, View, TextInput, ActivityIndicator, Alert } from "react-native";  
 import { SafeAreaView } from "react-native-safe-area-context";
 import { logout } from "@/services/auth";
 import useAuthStore from "@/store/authStore";
@@ -7,7 +7,7 @@ import { fetchReviewsByUser } from "@/services/reviews";
 import { Image } from 'expo-image'
 import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { updateProfile } from "@/services/auth";
+import { updateProfile, deleteProfile } from "@/services/auth";
 
 export default function Profile() {
     const { user } = useAuthStore();
@@ -15,8 +15,10 @@ export default function Profile() {
     const [username, setUsername] = useState(user?.username ?? '');
     const [password, setPassword] = useState<string>('');
     const [editing, setEditing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     
-    const { data } = useQuery({
+    const { data, isLoading } = useQuery({
         queryKey: ['reviews', 'createdAt', true],
         queryFn: () => fetchReviewsByUser('createdAt', 'desc'),
     }) 
@@ -25,6 +27,26 @@ export default function Profile() {
         setEmail(user?.email ?? '');
         setUsername(user?.username ?? '');
     }, [user?.email, user?.username]);
+
+    const handleProfileDelete = async () => {
+        Alert.alert(
+            "Confirm Deletion",
+            "Are you sure you want to delete your profile? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", style: "destructive", onPress: confirmDelete },
+            ]
+        );
+    }
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteProfile();
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
     const handleProfileUpdate = async () => {
         try {
@@ -39,6 +61,7 @@ export default function Profile() {
             const emailChanged = nextEmail !== currentEmail;
             const passwordChanged = nextPassword.length > 0;
 
+            setIsSubmitting(true);
             await updateProfile(
                 emailChanged ? nextEmail : undefined,
                 usernameChanged ? nextUsername : undefined,
@@ -49,11 +72,21 @@ export default function Profile() {
             setEditing(false);
         } catch (error) {
             console.error("Failed to update profile:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
+    if (isLoading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </SafeAreaView>
+        );
+    }
+
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={[styles.safeArea, { opacity: isSubmitting || isDeleting ? 0.5 : 1 }]} pointerEvents={isSubmitting || isDeleting ? 'none' : 'auto'}>
             <View style={{ alignItems: "center", marginTop: 32 }}>
                 <View style={{ flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 14 }}>
                     <View style={{borderRadius: 50, overflow: "hidden", borderColor: "#d6e1f3", borderWidth: 2}}>
@@ -107,17 +140,25 @@ export default function Profile() {
                 ) : (
                     <Text style={styles.welcomeText}>{user?.username}</Text>
                 )}
-                <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                    <Text style={styles.logoutButtonText}>Log Out</Text>
-                </TouchableOpacity>
+                {editing ? (
+                    <TouchableOpacity onPress={handleProfileUpdate} style={styles.submitButton} disabled={isSubmitting}>
+                        <Text style={styles.submitButtonText}>{isSubmitting ? "Saving..." : "Save Changes"}</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+                        <Text style={styles.logoutButtonText}>Log Out</Text>
+                    </TouchableOpacity>
+                )}
             </View>
             {editing ? (
                 <>
-                    <Ionicons name="checkmark" size={24} color="green" style={{ position: "absolute", top: 50, right: 20 }} onPress={() => handleProfileUpdate()} />
-                    <Ionicons name="close" size={24} color="red" style={{ position: "absolute", top: 90, right: 20 }} onPress={() => setEditing(false)} />
+                    <Ionicons name="close" size={24} color="red" style={{ position: "absolute", top: 50, right: 20 }} onPress={() => setEditing(false)} />
                 </>
             ) : (
-                <Ionicons name="pencil" size={24} color="black" style={{ position: "absolute", top: 50, right: 20 }} onPress={() => setEditing(!editing)} />
+                <>
+                    <Ionicons name="pencil" size={24} color="black" style={{ position: "absolute", top: 50, right: 20 }} onPress={() => setEditing(!editing)} />
+                    <Ionicons name="trash" size={24} color="red" style={{ position: "absolute", top: 80, right: 20 }} onPress={handleProfileDelete} disabled={isDeleting} />
+                </>
             )}
         </SafeAreaView>
     );
@@ -127,7 +168,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: "#F3F4F6",
-        position: "relative"
+        position: "relative",
     },
     logoutButton: {
         backgroundColor: "#EF4444",
@@ -138,6 +179,19 @@ const styles = StyleSheet.create({
         width: "90%",
     },
     logoutButtonText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    submitButton: {
+        backgroundColor: "#34C759",
+        borderRadius: 14,
+        padding: 12,
+        alignItems: "center",
+        margin: 14,
+        width: "90%",
+    },
+    submitButtonText: {
         color: "#FFFFFF",
         fontSize: 16,
         fontWeight: "700",

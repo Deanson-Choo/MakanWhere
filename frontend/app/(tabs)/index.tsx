@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput } from "react-native";  
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from "react-native";  
 import { SafeAreaView } from "react-native-safe-area-context";
 import { fetchReviewsByUser, updateReview, deleteReview } from "@/services/reviews";
 import StarRating, { StarRatingDisplay } from "react-native-star-rating-widget";
@@ -19,6 +19,7 @@ export default function Home() {
     const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
     const [sort, setSort] = useState<'createdAt' | 'rating'>('createdAt');
     const [isDesc, setIsDesc] = useState(true);
+    const [isExecutingAction, setIsExecutingAction] = useState(false);
 
     const flatListRef = useRef<FlatList>(null);
 
@@ -47,8 +48,22 @@ export default function Home() {
 }, [highlightId, reviews]);
 
     const handleDelete = async (id: number) => {
-        await deleteReview(id);
-        queryClient.invalidateQueries({ queryKey: ['reviews'] });
+        Alert.alert(
+            "Delete Review",
+            "Are you sure you want to delete this review?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", style: "destructive", onPress: async () => {
+                    setIsExecutingAction(true);
+                    try {
+                        await deleteReview(id);
+                        queryClient.invalidateQueries({ queryKey: ['reviews'] });
+                    } finally {
+                        setIsExecutingAction(false);
+                    }
+                } }
+            ]
+        );
     }
 
     const handleEdit = async (review: Location) => {
@@ -58,11 +73,16 @@ export default function Home() {
     }
 
     const handleUpdate = async (id: number) => {
-        await updateReview(id, rating, comment);
-        setEditingReviewId(null);
-        setRating(0);
-        setComment('');
-        queryClient.invalidateQueries({ queryKey: ['reviews'] });
+        setIsExecutingAction(true);
+        try {
+            await updateReview(id, rating, comment);
+            setEditingReviewId(null);
+            setRating(0);
+            setComment('');
+            queryClient.invalidateQueries({ queryKey: ['reviews'] });
+        } finally {
+            setIsExecutingAction(false);
+        }
     }
 
     const handleSort = (sortBy: 'createdAt' | 'rating') => {
@@ -78,8 +98,26 @@ export default function Home() {
         router.push( {pathname: "/map" , params: { highlightId: id } });
     }
 
+    if (isLoading) {
+        return (
+            <ActivityIndicator size="large" color="#0B47C9" style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} />
+        );
+    }
+
+    if (!reviews || reviews.length === 0) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                    <Text style={{ fontSize: 16, color: '#111827', marginVertical: 6, textAlign: 'center' }}>
+                        You haven't reviewed any places yet.
+                    </Text>
+                </View>
+            </SafeAreaView>
+        )
+    }
+
     return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5', opacity: isExecutingAction ? 0.5 : 1}} pointerEvents={isExecutingAction ? 'none' : 'auto'}>
         <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginVertical: 6, textAlign: 'center' }}>
             Your Reviewed Places
         </Text>
@@ -106,8 +144,8 @@ export default function Home() {
                         <Text style={styles.address}>{review.address}</Text>
                         <StarRating onChange={setRating} rating={rating} starSize={20} maxStars={5}/>
                         <TextInput style={styles.editCommentBox} value={comment} onChangeText={setComment} placeholder="Write your comment here..."/>
-                        <TouchableOpacity style={styles.submitButton} onPress={() => handleUpdate(review.id!)}>
-                            <Text style={styles.primaryButtonText}>Update Review</Text>
+                        <TouchableOpacity style={styles.submitButton} onPress={() => handleUpdate(review.id!)} disabled={isExecutingAction}>
+                            <Text style={styles.primaryButtonText}>{isExecutingAction ? 'Updating...' : 'Update Review'}</Text>
                         </TouchableOpacity>
                         <Ionicons style={styles.closeIcon} name="close" size={20} color="#4B5563" onPress={() => setEditingReviewId(null)} />
                     </View>
@@ -124,14 +162,14 @@ export default function Home() {
                                 </Text>
                             </View>
 
-                            <View style={{ flexDirection: 'column', justifyContent: 'space-around', height: 80 }}>
-                                <TouchableOpacity onPress={() => handleEdit(review)}>
+                            <View style={{ flexDirection: 'column', justifyContent: 'space-around', height: 80}}>
+                                <TouchableOpacity onPress={() => handleEdit(review)} disabled={isExecutingAction}>
                                     <Ionicons name="pencil" size={20} color="#4B5563" />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDelete(review.id!)}>
+                                <TouchableOpacity onPress={() => handleDelete(review.id!)} disabled={isExecutingAction}>
                                     <Ionicons name="trash" size={20} color="#EF4444" />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleRedirect(review.id!)}>
+                                <TouchableOpacity onPress={() => handleRedirect(review.id!)} disabled={isExecutingAction}>
                                     <Ionicons name="location" size={20} color="#0B47C9" />
                                 </TouchableOpacity>
                             </View>

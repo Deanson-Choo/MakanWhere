@@ -1,13 +1,13 @@
 import 'react-native-get-random-values'
 import {useState, useEffect} from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet} from "react-native";
+import { FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator} from "react-native";
 import { Suggestion } from "../types/suggestion";
 import { router } from 'expo-router';
 import { useLocationSearch } from '@/hooks/useLocation';
 
 export default function SearchBox() {
-    const { suggestions, search } = useLocationSearch();
+    const { suggestions, search, isLoading } = useLocationSearch();
     const [query, setQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('')
     const [sessionToken] = useState(() => uuidv4());
@@ -59,7 +59,7 @@ export default function SearchBox() {
                         </TouchableOpacity>
                     )}
                 />
-                )}
+            )}
         </View>
     )
 }
@@ -67,7 +67,7 @@ export default function SearchBox() {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        paddingHorizontal: 10
+        paddingHorizontal: 10,
     },
     input: {
         backgroundColor: '#fff',

@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { UserModel } from '../models/user.model.js';
+import * as UserModel from '../models/user.model.js';
 
 export async function updateProfile(req, res, next) {
     try {
@@ -48,5 +48,19 @@ export async function updateProfile(req, res, next) {
         });
     } catch (err) {
         next(err); // Sends ANY unexpected error (DB down, JWT secret missing, etc.) to the global error handler
+    }
+}
+
+export async function deleteProfile(req, res, next) {
+    try {
+        const userId = req.user.id;
+
+        await UserModel.deleteUser(userId);
+
+        res.status(200).json({
+            success: true,
+        });
+    } catch (err) {
+        next(err);
     }
 }

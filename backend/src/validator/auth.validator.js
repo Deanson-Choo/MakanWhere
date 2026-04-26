@@ -1,5 +1,4 @@
 import { body, validationResult } from 'express-validator';
-import { UserModel } from '../models/user.model.js';
 
 // This function checks if the "rules" found any issues
 const validateRequest = (req, res, next) => {

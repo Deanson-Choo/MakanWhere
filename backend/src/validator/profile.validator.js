@@ -17,7 +17,7 @@ export const updateProfileValidator = [
   body('username')
     .optional()
     .trim()
-    .isLength({ min: 2 }).withMessage('Username must be at least 2 characters'),
+    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
 
   body('email')
     .optional()
