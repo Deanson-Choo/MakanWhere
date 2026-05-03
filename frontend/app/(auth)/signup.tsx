@@ -1,14 +1,18 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from 'react';
 import { register } from '@/services/auth';
+import TopLogo from '@/components/TopLogo';
+import { Ionicons } from "@expo/vector-icons";
 
 export default function SignUp() {
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSignUp = async () => {
         if (email && username && password) {
@@ -25,59 +29,51 @@ export default function SignUp() {
 
     return (
         <SafeAreaView style={styles.safeAreaView}>
+            <TopLogo />
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.appName}>MakanWhere</Text>
-                    <Text style={styles.subtitle}>Create your account</Text>
-                </View>
-
-                <View style={styles.form}>
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Email</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="mkwhere@gmail.com"
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            value={email}
-                            onChangeText={setEmail}
-                        />
-                    </View>
-
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Username</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="mkwhere123"
-                            placeholderTextColor="#9CA3AF"
-                            autoCapitalize="none"
+                <Ionicons name="arrow-back" size={24} color="black" style={styles.backArrow} onPress={() => router.back()} />
+                <Text style={styles.title}>Sign up</Text>
+                <Text style={styles.subtitle}>Create an account to continue!</Text>
+                <View style={styles.formContainer}>
+                    <View>
+                        <Text style={styles.formHeader}>Username</Text>
+                        <TextInput 
+                            style={styles.formInput}
                             value={username}
+                            placeholder="recco247"
                             onChangeText={setUsername}
                         />
                     </View>
-
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Password</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="••••••••"
-                            placeholderTextColor="#9CA3AF"
-                            secureTextEntry
-                            value={password}
-                            onChangeText={setPassword}
+                    <View>
+                        <Text style={styles.formHeader}>Email</Text>
+                        <TextInput 
+                            style={styles.formInput}
+                            value={email}
+                            placeholder="recco247@email.com"
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            onChangeText={setEmail}
                         />
                     </View>
-
-                    <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
-                        <Text style={styles.buttonText}>{isLoading ? 'Signing up...' : 'Sign Up'}</Text>
-                    </TouchableOpacity>
+                    <View>
+                        <Text style={styles.formHeader}>Password</Text>
+                        <View style={styles.passwordInputContainer}>
+                            <TextInput 
+                                style={styles.passwordInput}
+                                value={password}
+                                placeholder="********"
+                                secureTextEntry={!showPassword}
+                                onChangeText={setPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Already have an account? </Text>
-                    <Link style={styles.link} href="/login">Log in</Link>
-                </View>
+                <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
+                    <Text style={styles.buttonText}>{isLoading ? "Signing up..." : "Sign Up"}</Text>
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     )
@@ -88,70 +84,102 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
+    backArrow: {
+        position: 'absolute',
+        top: -29,
+        left: 40
+    },
+    image: {
+        width: 63,
+        height: 78,
+        alignSelf: 'center',
+        marginTop: 20,
+        marginBottom: 39
+    },
     container: {
+        marginTop: 55,
         flex: 1,
-        paddingHorizontal: 28,
-        justifyContent: 'center',
+        width: '100%',
+        paddingHorizontal: 40,
     },
-    header: {
-        marginBottom: 40,
-    },
-    appName: {
+    title: {
         fontSize: 32,
-        fontWeight: '700',
-        color: '#111827',
-        marginBottom: 6,
+        fontWeight: 'bold',
+        marginBottom: 12
     },
     subtitle: {
-        fontSize: 15,
-        color: '#6B7280',
+        fontSize: 12,
+        fontWeight: '400',
+        marginBottom: 32
     },
-    form: {
-        gap: 16,
-    },
-    field: {
-        gap: 6,
-    },
-    label: {
-        fontSize: 14,
+    formHeader: {
+        fontSize: 12,
         fontWeight: '500',
-        color: '#374151',
+        marginBottom: 2
     },
-    input: {
-        height: 48,
+    formInput: {
         borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        fontSize: 15,
-        color: '#111827',
-        backgroundColor: '#F9FAFB',
+        borderColor: '#E5E5E5',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        fontSize: 14,
+        fontWeight: '400',
+    },
+    passwordInput: {
+        fontSize: 14,
+        fontWeight: '400',
+        paddingVertical: 10,
+    },
+    passwordInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+    },
+    formContainer: {
+        flexDirection: 'column',
+        gap: 16
+    },
+    forgetPassword: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#007bff',
+        alignSelf: 'flex-end',
     },
     button: {
+        marginTop: 16,
+        marginBottom: 24,
+        backgroundColor: '#F3882C',
+        paddingVertical: 10,
+        paddingHorizontal: 24,
+        width: 327,
         height: 48,
-        backgroundColor: '#3B82F6',
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 8,
     },
     buttonText: {
-        color: '#FFFFFF',
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 32,
+        textAlign: 'center',
     },
     footerText: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    link: {
-        fontSize: 14,
-        color: '#3B82F6',
+        fontSize: 12,
         fontWeight: '500',
+        marginBottom: 8
+    },
+    signUp: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#007bff',
+    },
+    footerContainer: {
+        flexDirection: 'row',
+        gap: 5,
+        justifyContent: 'center',
     },
 })

@@ -1,13 +1,18 @@
 import { Text, TextInput, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { Image } from "expo-image";
 import { Link } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { login } from "@/services/auth";
 import { useState } from "react";
+import TopLogo from "@/components/TopLogo";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async () => {
         if (email && password) {
@@ -24,46 +29,45 @@ export default function LoginPage() {
     
     return (
         <SafeAreaView style={styles.safeAreaView}>
+            <TopLogo />
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.appName}>MakanWhere</Text>
-                    <Text style={styles.subtitle}>Find your next favourite meal</Text>
-                </View>
-
-                <View style={styles.form}>
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Email</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="example@gmail.com"
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="email-address"
-                            autoCapitalize="none"
+                <Text style={styles.title}>Sign in to your Account</Text>
+                <Text style={styles.subtitle}>Enter your email and password to log in</Text>
+                <View style={styles.formContainer}>
+                    <View>
+                        <Text style={styles.formHeader}>Email</Text>
+                        <TextInput 
+                            style={styles.formInput}
                             value={email}
+                            placeholder="recco247@email.com"
+                            autoCapitalize="none"
+                            keyboardType="email-address"
                             onChangeText={setEmail}
                         />
                     </View>
-
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Password</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="••••••••"
-                            placeholderTextColor="#9CA3AF"
-                            secureTextEntry
-                            value={password}
-                            onChangeText={setPassword}
-                        />
+                    <View>
+                        <Text style={styles.formHeader}>Password</Text>
+                        <View style={styles.passwordInputContainer}>
+                            <TextInput 
+                                style={styles.passwordInput}
+                                value={password}
+                                placeholder="********"
+                                secureTextEntry={!showPassword}
+                                onChangeText={setPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-
-                    <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
-                        <Text style={styles.buttonText}>{isLoading ? 'Logging in...' : 'Log in'}</Text>
-                    </TouchableOpacity>
+                    <Text style={styles.forgetPassword}>Forgot password?</Text>
                 </View>
-
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Don&apos;t have an account? </Text>
-                    <Link style={styles.link} href="/signup">Sign up</Link>
+                <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+                    <Text style={styles.buttonText}>{isLoading ? "Logging in..." : "Log In"}</Text>
+                </TouchableOpacity>
+                <View style={styles.footerContainer}>
+                    <Text style={styles.footerText}>Don't have an account?</Text>
+                    <Link style={styles.signUp} href="/(auth)/signup">Sign Up</Link>
                 </View>
             </View>
         </SafeAreaView>
@@ -75,70 +79,97 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
+    image: {
+        width: 63,
+        height: 78,
+        alignSelf: 'center',
+        marginTop: 20,
+        marginBottom: 39
+    },
     container: {
+        marginTop: 55,
         flex: 1,
-        paddingHorizontal: 28,
-        justifyContent: 'center',
+        width: '100%',
+        paddingHorizontal: 40,
     },
-    header: {
-        marginBottom: 40,
-    },
-    appName: {
+    title: {
         fontSize: 32,
-        fontWeight: '700',
-        color: '#111827',
-        marginBottom: 6,
+        fontWeight: 'bold',
+        marginBottom: 12
     },
     subtitle: {
-        fontSize: 15,
-        color: '#6B7280',
+        fontSize: 12,
+        fontWeight: '400',
+        marginBottom: 32
     },
-    form: {
-        gap: 16,
+    formHeader: {
+        fontSize: 12,
+        fontWeight: '500',
+        marginBottom: 2
     },
-    field: {
-        gap: 6,
-    },
-    label: {
+    formInput: {
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
         fontSize: 14,
         fontWeight: '500',
-        color: '#374151',
     },
-    input: {
-        height: 48,
+    passwordInput: {
+        fontSize: 14,
+        fontWeight: '500',
+        paddingVertical: 10,
+    },
+    passwordInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        fontSize: 15,
-        color: '#111827',
-        backgroundColor: '#F9FAFB',
+        borderColor: '#E5E5E5',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+    },
+    formContainer: {
+        flexDirection: 'column',
+        gap: 16
+    },
+    forgetPassword: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#007bff',
+        alignSelf: 'flex-end',
     },
     button: {
+        marginTop: 16,
+        marginBottom: 24,
+        backgroundColor: '#F3882C',
+        paddingVertical: 10,
+        paddingHorizontal: 24,
+        width: 327,
         height: 48,
-        backgroundColor: '#3B82F6',
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 8,
     },
     buttonText: {
-        color: '#FFFFFF',
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 32,
+        textAlign: 'center',
     },
     footerText: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    link: {
-        fontSize: 14,
-        color: '#3B82F6',
+        fontSize: 12,
         fontWeight: '500',
+        marginBottom: 8
+    },
+    signUp: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#007bff',
+    },
+    footerContainer: {
+        flexDirection: 'row',
+        gap: 5,
+        justifyContent: 'center',
     },
 })
