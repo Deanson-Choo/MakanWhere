@@ -59,3 +59,12 @@ First day of documenting current features of project
 #### Frontend
 - Added profile deletion
 - Added loading UI for better feedback
+
+### 4/6/2026
+#### SQL Tables
+- Redefined Users, Locations, Reviews Table
+
+#### Backend
+- Added JWT refresh and access token flow
+- Added auth to mapbox endpoint
+- Refine mapbox, auth and profile endpoints 

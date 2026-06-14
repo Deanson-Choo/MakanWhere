@@ -1,243 +1,231 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from "react-native";  
-import { SafeAreaView } from "react-native-safe-area-context";
-import { fetchReviewsByUser, updateReview, deleteReview } from "@/services/reviews";
-import StarRating, { StarRatingDisplay } from "react-native-star-rating-widget";
-import { Location } from "@/types/location";
-import { useEffect, useState, useRef } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {View, StyleSheet, TouchableOpacity, Text, Image as RNImage} from 'react-native';
+import Mapbox, { MapView, Camera, PointAnnotation } from "@rnmapbox/maps";
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useState, useEffect } from 'react';
+import { Location } from '../../types/location';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import SearchBox from '@/components/SearchBox';
+import { Colors } from "@/constants/colors";
+import { router } from 'expo-router';
 
 
-{/* This is the Home screen that shows all reviews by the user. RUD operations are possible here. */}
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN!);
 
-export default function Home() {
-    const { highlightId } = useLocalSearchParams<{ highlightId: string }>();
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState('')
-    const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
-    const [sort, setSort] = useState<'createdAt' | 'rating'>('createdAt');
-    const [isDesc, setIsDesc] = useState(true);
-    const [isExecutingAction, setIsExecutingAction] = useState(false);
+export default function Map() {
+    // Map Settings
+    const [viewState, setViewState] = useState({
+        zoom: 11,
+        longitude: 103.8,
+        latitude: 1.38
+    })
 
-    const flatListRef = useRef<FlatList>(null);
-
-    const queryClient = useQueryClient();
-
-    const { data: reviews, isLoading } = useQuery({
-        queryKey: ['reviews', sort, isDesc],
-        queryFn: () => fetchReviewsByUser(sort, isDesc ? 'desc' : 'asc')
-    }) 
-
-    // This effect highlights a review from explore.tsx
+    // Selected Location
+    const [selectedLocation ,setSelectedLocation] = useState<Location | undefined>(undefined)
     useEffect(() => {
-    if (highlightId && reviews && reviews.length > 0) {
-        const index = reviews.findIndex(r => r.id === parseInt(highlightId));
-        
-        if (index !== -1) {
-            setTimeout(() => {
-                flatListRef.current?.scrollToIndex({
-                    index: index,
-                    animated: true,
-                    viewPosition: 0.5 // 0.5 puts the item exactly in the middle of the screen
-                });
-            }, 100);
+        if (selectedLocation) {
+            setViewState({
+                zoom: 13,
+                longitude: selectedLocation.longitude,
+                latitude: selectedLocation.latitude - 0.015
+            });
         }
-    }
-}, [highlightId, reviews]);
+    }, [selectedLocation]);
 
-    const handleDelete = async (id: number) => {
-        Alert.alert(
-            "Delete Review",
-            "Are you sure you want to delete this review?",
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", style: "destructive", onPress: async () => {
-                    setIsExecutingAction(true);
-                    try {
-                        await deleteReview(id);
-                        queryClient.invalidateQueries({ queryKey: ['reviews'] });
-                    } finally {
-                        setIsExecutingAction(false);
-                    }
-                } }
-            ]
-        );
-    }
-
-    const handleEdit = async (review: Location) => {
-        setEditingReviewId(review.id ?? null);
-        setRating(review.rating ?? 0);
-        setComment(review.comment ?? '');
-    }
-
-    const handleUpdate = async (id: number) => {
-        setIsExecutingAction(true);
-        try {
-            await updateReview(id, rating, comment);
-            setEditingReviewId(null);
-            setRating(0);
-            setComment('');
-            queryClient.invalidateQueries({ queryKey: ['reviews'] });
-        } finally {
-            setIsExecutingAction(false);
-        }
-    }
-
-    const handleSort = (sortBy: 'createdAt' | 'rating') => {
-        if (sortBy !== sort) {
-            setIsDesc(true)
-            setSort(sortBy)
-        } else {
-            setIsDesc(isDesc => !isDesc)
-        }
-    }
-
-    const handleRedirect = (id: number) => {
-        router.push( {pathname: "/map" , params: { highlightId: id } });
-    }
-
-    if (isLoading) {
-        return (
-            <ActivityIndicator size="large" color="#0B47C9" style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} />
-        );
-    }
-
-    if (!reviews || reviews.length === 0) {
-        return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                    <Text style={{ fontSize: 16, color: '#111827', marginVertical: 6, textAlign: 'center' }}>
-                        You haven't reviewed any places yet.
-                    </Text>
-                </View>
-            </SafeAreaView>
-        )
-    }
-
+    // Search Box Focus State
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    
     return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5', opacity: isExecutingAction ? 0.5 : 1}} pointerEvents={isExecutingAction ? 'none' : 'auto'}>
-        <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginVertical: 6, textAlign: 'center' }}>
-            Your Reviewed Places
-        </Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'center'}}>
-            <TouchableOpacity onPress={() => handleSort('createdAt')} style={{ marginHorizontal: 8, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: sort === 'createdAt' ? '#0b47c9' : '#6B7280', fontWeight: sort === 'createdAt' ? '700' : '400' }}>Sort by Date</Text>
-                {sort === 'createdAt' && <Ionicons name={isDesc ? "arrow-down" : "arrow-up"} size={12} color={sort === 'createdAt' ? '#0b47c9' : '#6B7280'} />}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleSort('rating')} style={{ marginHorizontal: 8, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: sort === 'rating' ? '#0b47c9' : '#6B7280', fontWeight: sort === 'rating' ? '700' : '400' }}>Sort by Rating</Text>
-                {sort === 'rating' && <Ionicons name={isDesc ? "arrow-down" : "arrow-up"} size={12} color={sort === 'rating' ? '#0b47c9' : '#6B7280'} />}
-            </TouchableOpacity>
+        <View style={styles.container}>
+            {/* Search Box Logic */}
+            {isSearchFocused && <View style={styles.overlay} />}
+            <SafeAreaView style={styles.safeArea}>
+                <SearchBox onFocusChange={setIsSearchFocused} setSelectedLocation={setSelectedLocation} />
+            </SafeAreaView>
 
-        </View>
-        <FlatList 
-            data={reviews}
-            ref={flatListRef}
-            keyExtractor={(item) => item.id!.toString()}
-            contentContainerStyle={{ padding: 16 }}
-            renderItem={({ item: review }) => (
-                editingReviewId === review.id ? (
-                    <View style={styles.card}>
-                        <Text style={styles.placeName}>{review.place_name}</Text>
-                        <Text style={styles.address}>{review.address}</Text>
-                        <StarRating onChange={setRating} rating={rating} starSize={20} maxStars={5}/>
-                        <TextInput style={styles.editCommentBox} value={comment} onChangeText={setComment} placeholder="Write your comment here..."/>
-                        <TouchableOpacity style={styles.submitButton} onPress={() => handleUpdate(review.id!)} disabled={isExecutingAction}>
-                            <Text style={styles.primaryButtonText}>{isExecutingAction ? 'Updating...' : 'Update Review'}</Text>
-                        </TouchableOpacity>
-                        <Ionicons style={styles.closeIcon} name="close" size={20} color="#4B5563" onPress={() => setEditingReviewId(null)} />
+            {/* Map Display */}
+            <MapView style={styles.map}>
+                <Camera
+                    defaultSettings={{
+                        centerCoordinate: [viewState.longitude, viewState.latitude],
+                        zoomLevel: viewState.zoom,
+                    }}
+                    centerCoordinate={[viewState.longitude, viewState.latitude]}
+                    zoomLevel={viewState.zoom}
+                    animationMode={'flyTo'} 
+                    animationDuration={1000}                        
+                />
+                {selectedLocation && (
+                    <PointAnnotation
+                        id={String(selectedLocation.id)}
+                        coordinate={[selectedLocation.longitude, selectedLocation.latitude]}
+                    >
+                        <RNImage 
+                            source={require('@/assets/images/Logo_Plain.png')}
+                            style={styles.selectedLocationMarker}
+                            resizeMode="contain"
+                        />
+                    </PointAnnotation>
+                )}
+            </MapView>
+
+            {/* Selected Location Display */}
+            <View style={styles.safeAreaModal}>
+                {selectedLocation ? (
+                    <View style={styles.modal}>
+                        <Ionicons name="close" size={24} style={styles.closeIcon} onPress={() => setSelectedLocation(undefined)} />
+                        <View style={styles.grabber}/>
+                        <View style={styles.placeInfoContainer}>
+                            <View style={styles.placeInfoHeader}>
+                                <Text style={styles.title}>{selectedLocation.place_name}</Text>
+                                <View style={styles.ratingsContainer}>
+                                    <Ionicons name="star" size={16} color='gold'/>
+                                    <Text style={styles.ratingsText}>{selectedLocation.rating ?? 'N/A'}</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.address}>{selectedLocation.address}</Text>
+                        </View>
+                        <View style={styles.imageContainer}>
+                            <Image 
+                                source={{uri: 'https://sethlui.com/wp-content/uploads/2023/08/springleaf-prata-17.jpg'}}
+                                style={styles.image}
+                                contentFit={'cover'}
+                            />
+                        </View>
+                        {selectedLocation.rating? (
+                            <TouchableOpacity style={styles.button}>
+                                <Text style={styles.buttonText}>See Reviews</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity style={styles.button} onPress={()=> router.push({
+                                pathname: '/add-review',
+                                params: {
+                                    mapbox_id: selectedLocation.mapbox_id,
+                                }
+                            })
+                            }>
+                                <Text style={styles.buttonText}>Add A Review</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : (
-                    <View style={styles.card}>
-                        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}> 
-                            <View style={{ flex: 1, marginRight: 12 }}> 
-                                <Text style={styles.placeName}>{review.place_name}</Text>
-                                <Text style={styles.address}>{review.address}</Text>
-                                {review.image_url && <Image source={{ uri: review.image_url }} style={{ width: '100%', height: 150, borderRadius: 10, marginVertical: 8 }} contentFit="cover" />}
-                                <StarRatingDisplay rating={review.rating ?? 0} starSize={20} maxStars={5}/>
-                                <Text style={styles.displayCommentBox} numberOfLines={4}>
-                                    {review.comment}
-                                </Text>
-                            </View>
-
-                            <View style={{ flexDirection: 'column', justifyContent: 'space-around', height: 80}}>
-                                <TouchableOpacity onPress={() => handleEdit(review)} disabled={isExecutingAction}>
-                                    <Ionicons name="pencil" size={20} color="#4B5563" />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDelete(review.id!)} disabled={isExecutingAction}>
-                                    <Ionicons name="trash" size={20} color="#EF4444" />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleRedirect(review.id!)} disabled={isExecutingAction}>
-                                    <Ionicons name="location" size={20} color="#0B47C9" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                )
-            )}
-        />
-    </SafeAreaView>
-);
+                    null
+                )}
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    container: {
+        flex: 1
+    },
+    map: {
+        flex: 1
+    },
+    safeArea: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 2,
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        zIndex: 1,
     },
-    placeName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 4,
+
+    selectedLocationMarker: {
+        width: 45,
+        height: 57,
     },
-    address: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 4,
+
+    safeAreaModal: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%'
     },
-    displayCommentBox: {
-        borderRadius: 10,
-        backgroundColor: '#FFFFFF',
-        fontSize: 14,
-        color: '#111827',
-        textAlignVertical: 'top',
-        padding: 8,
-        marginTop: 8,
+    modal: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        borderColor: '#cbcbcb',
+        borderWidth: 1,
     },
-    editCommentBox: {
-        borderRadius: 10,
-        backgroundColor: '#FFFFFF',
-        fontSize: 14,
-        color: '#111827',
-        textAlignVertical: 'top',
-        padding: 8,
-        marginTop: 8,
-    },
-    submitButton: {
-        marginTop: 4,
-        backgroundColor: '#34C759',
-        borderRadius: 10,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        alignItems: 'center',
-    },
-    primaryButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '700',
-        fontSize: 15,
+    grabber: {
+        width: 40,
+        height: 5,
+        backgroundColor: '#aeacac',
+        borderRadius: 2.5,
+        alignSelf: 'center', 
+        position: 'absolute',
+        top: 10,
     },
     closeIcon: {
         position: 'absolute',
-        top: 16,
-        right: 16,
+        top: 15,
+        right: 15,
+    },
+    placeInfoContainer: {
+        gap: 5,
+        marginBottom: 15,
+        marginTop: 25
+    },
+    placeInfoHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 36
+    },
+    ratingsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        borderRadius: 15,
+        borderColor: Colors.primary,
+        borderWidth: 2,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+    },
+    ratingsText: {
+        fontWeight: '600',
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: '600',
+        width: '70%'
+    },
+    address: {
+        fontSize: 16,
+        fontWeight: '300',
+    },
+    imageContainer: {
+        borderRadius: 20,
+        borderColor: '#cbcbcb',
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginBottom: 15
+    },
+    image: {
+        width: '100%',
+        height: 200,
+    },
+    button: {
+        backgroundColor: Colors.primary,
+        paddingVertical: 8,
+        borderRadius: 15,
+        alignItems: 'center',
+        borderColor: '#c5c5c5',
+        borderWidth: 1,
+    },
+    buttonText: {
+        color: 'black',
+        fontWeight: '600',
+        fontSize: 16,
     },
 });

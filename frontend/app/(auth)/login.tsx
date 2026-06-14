@@ -1,11 +1,11 @@
 import { Text, TextInput, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { Image } from "expo-image";
 import { Link } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { login } from "@/services/auth";
 import { useState } from "react";
 import TopLogo from "@/components/TopLogo";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/colors";
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -137,13 +137,13 @@ const styles = StyleSheet.create({
     forgetPassword: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#007bff',
+        color: Colors.secondary,
         alignSelf: 'flex-end',
     },
     button: {
         marginTop: 16,
         marginBottom: 24,
-        backgroundColor: '#F3882C',
+        backgroundColor: Colors.primary,
         paddingVertical: 10,
         paddingHorizontal: 24,
         width: 327,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     signUp: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#007bff',
+        color: Colors.secondary,
     },
     footerContainer: {
         flexDirection: 'row',

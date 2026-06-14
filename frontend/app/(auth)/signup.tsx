@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { register } from '@/services/auth';
 import TopLogo from '@/components/TopLogo';
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from '@/constants/colors';
 
 export default function SignUp() {
     const [email, setEmail] = useState('');
@@ -89,13 +90,6 @@ const styles = StyleSheet.create({
         top: -29,
         left: 40
     },
-    image: {
-        width: 63,
-        height: 78,
-        alignSelf: 'center',
-        marginTop: 20,
-        marginBottom: 39
-    },
     container: {
         marginTop: 55,
         flex: 1,
@@ -144,16 +138,10 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         gap: 16
     },
-    forgetPassword: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#007bff',
-        alignSelf: 'flex-end',
-    },
     button: {
         marginTop: 16,
         marginBottom: 24,
-        backgroundColor: '#F3882C',
+        backgroundColor: Colors.primary,
         paddingVertical: 10,
         paddingHorizontal: 24,
         width: 327,
@@ -166,20 +154,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         textAlign: 'center',
-    },
-    footerText: {
-        fontSize: 12,
-        fontWeight: '500',
-        marginBottom: 8
-    },
-    signUp: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#007bff',
-    },
-    footerContainer: {
-        flexDirection: 'row',
-        gap: 5,
-        justifyContent: 'center',
-    },
+    }
 })

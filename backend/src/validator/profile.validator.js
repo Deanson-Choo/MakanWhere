@@ -16,18 +16,13 @@ const validateRequest = (req, res, next) => {
 export const updateProfileValidator = [
   body('username')
     .optional()
-    .trim()
-    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+    .trim(),
 
   body('email')
     .optional()
     .trim()
     .isEmail().withMessage('Email format is invalid')
     .normalizeEmail(),
-
-  body('password')
-    .optional()
-    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 
   validateRequest
 ];

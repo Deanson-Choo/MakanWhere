@@ -16,6 +16,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Protected guard={isAuthenticated}>
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="(home_screens)" />
             </Stack.Protected>
             <Stack.Protected guard={!isAuthenticated}>
               <Stack.Screen name="(auth)" />

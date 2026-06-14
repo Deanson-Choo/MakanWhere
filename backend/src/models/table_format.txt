@@ -1,0 +1,35 @@
+CREATE TABLE users (
+    id            SERIAL PRIMARY KEY,
+    username      TEXT UNIQUE NOT NULL,
+    email         TEXT UNIQUE NOT NULL,
+    password      TEXT NOT NULL,
+    refresh_token TEXT,
+    created_at    TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE locations (
+    mapbox_id    TEXT PRIMARY KEY,
+    place_name   TEXT,
+    address      TEXT,
+    latitude     FLOAT,
+    longitude    FLOAT,
+    cuisine_types TEXT[]
+);
+
+CREATE TABLE reviews (
+    id                 SERIAL PRIMARY KEY,
+    user_id            INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    location_id        TEXT NOT NULL REFERENCES locations(mapbox_id),
+
+    food_rating        INT  NOT NULL CHECK (food_rating BETWEEN 1 AND 5),
+    atmosphere_rating  INT  NOT NULL CHECK (atmosphere_rating BETWEEN 1 AND 5),
+    worth_it_rating    INT  NOT NULL CHECK (worth_it_rating BETWEEN 1 AND 5),
+
+    amount_spent       TEXT CHECK (amount_spent IN ('1-10', '10-20', '20-30', '30-40', '40-50', '>50')),
+    tags               TEXT[],
+    remarks            TEXT,
+    image_urls         TEXT[],
+
+    created_at         TIMESTAMP DEFAULT NOW(),
+    updated_at         TIMESTAMP DEFAULT NOW()
+);

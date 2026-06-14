@@ -13,66 +13,92 @@ const validateRequest = (req, res, next) => {
     next();
 };
 
-export const validateSubmitReview = [
-    body('mapbox_id')
-        .exists({ checkFalsy: true }).withMessage('Mapbox ID is required')
-        .isString().withMessage('Mapbox ID must be a string'),
-    body('rating')
-        .exists().withMessage('Rating is required')
-        .isFloat({ min: 0, max: 5 }).withMessage('Rating must be a number between 0 and 5'),
-    body('comment')
+export const createReviewValidator = [
+    body('location.mapbox_id')
+        .notEmpty().withMessage('mapbox_id is required').bail()
+        .isString().withMessage('mapbox_id must be a string'),
+    body('location.place_name')
+        .notEmpty().withMessage('place_name is required').bail()
+        .isString().withMessage('place_name must be a string'),
+    body('location.address')
+        .notEmpty().withMessage('address is required').bail()
+        .isString().withMessage('address must be a string'),
+    body('location.latitude')
+        .notEmpty().withMessage('latitude is required').bail()
+        .isFloat().withMessage('latitude must be a number'),
+    body('location.longitude')
+        .notEmpty().withMessage('longitude is required').bail()
+        .isFloat().withMessage('longitude must be a number'),
+    body('location.cuisine_types')
         .optional()
-        .isString().withMessage('Comment must be a string'),
-    body('place_name')
-        .exists({ checkFalsy: true }).withMessage('Place name is required')
-        .isString().withMessage('Place name must be a string'),
-    body('address')
-        .exists({ checkFalsy: true }).withMessage('Address is required')
-        .isString().withMessage('Address must be a string'),
-    body('latitude')
-        .exists().withMessage('Latitude is required')
-        .isFloat().withMessage('Latitude must be a valid number'),
-    body('longitude')
-        .exists().withMessage('Longitude is required')
-        .isFloat().withMessage('Longitude must be a valid number'),
-    body('image')
+        .isArray().withMessage('cuisine_types must be an array')
+        .custom((arr) => arr.every((t) => typeof t === 'string')).withMessage('each cuisine type must be a string'),
+
+    body('review.food_rating')
+        .notEmpty().withMessage('food_rating is required').bail()
+        .isInt({ min: 1, max: 5 }).withMessage('food_rating must be an integer between 1 and 5'),
+    body('review.atmosphere_rating')
+        .notEmpty().withMessage('atmosphere_rating is required').bail()
+        .isInt({ min: 1, max: 5 }).withMessage('atmosphere_rating must be an integer between 1 and 5'),
+    body('review.worth_it_rating')
+        .notEmpty().withMessage('worth_it_rating is required').bail()
+        .isInt({ min: 1, max: 5 }).withMessage('worth_it_rating must be an integer between 1 and 5'),
+    body('review.amount_spent')
         .optional()
-        .isString().withMessage('Image must be a string'),
+        .isIn(['1-10', '10-20', '20-30', '30-40', '40-50', '>50'])
+        .withMessage('amount_spent must be one of: 1-10, 10-20, 20-30, 30-40, 40-50, >50'),
+    body('review.tags')
+        .optional()
+        .isArray().withMessage('tags must be an array')
+        .custom((arr) => arr.every((t) => typeof t === 'string')).withMessage('each tag must be a string'),
+    body('review.remarks')
+        .optional()
+        .isString().withMessage('remarks must be a string'),
+    body('review.image_urls')
+        .optional()
+        .isArray().withMessage('image_urls must be an array')
+        .custom((arr) => arr.every((u) => typeof u === 'string')).withMessage('each image URL must be a string'),
+
     validateRequest
 ];
 
-export const validateUpdateReview = [
+export const updateReviewValidator = [
     param('id')
         .isInt().withMessage('Review ID must be an integer'),
 
-    body('rating')
-        .exists().withMessage('Rating is required').bail()
-        .isFloat({ min: 0, max: 5 }).withMessage('Rating must be a number between 0 and 5').bail(),
-    body('comment')
+    body('food_rating')
         .optional()
-        .isString().withMessage('Comment must be a string'),
-    validateRequest
-    
+        .isInt({ min: 1, max: 5 }).withMessage('food_rating must be an integer between 1 and 5'),
+    body('atmosphere_rating')
+        .optional()
+        .isInt({ min: 1, max: 5 }).withMessage('atmosphere_rating must be an integer between 1 and 5'),
+    body('worth_it_rating')
+        .optional()
+        .isInt({ min: 1, max: 5 }).withMessage('worth_it_rating must be an integer between 1 and 5'),
+    body('amount_spent')
+        .optional()
+        .isIn(['1-10', '10-20', '20-30', '30-40', '40-50', '>50'])
+        .withMessage('amount_spent must be one of: 1-10, 10-20, 20-30, 30-40, 40-50, >50'),
+    body('tags') // By right, there are fixed tags, but user can customize it in the future
+        .optional()
+        .isArray().withMessage('tags must be an array')
+        .custom((arr) => arr.every((t) => typeof t === 'string')).withMessage('each tag must be a string'),
+    body('remarks')
+        .optional()
+        .isString().withMessage('remarks must be a string'),
+    body('image_urls')
+        .optional()
+        .isArray().withMessage('image_urls must be an array')
+        .custom((arr) => arr.every((u) => typeof u === 'string')).withMessage('each image URL must be a string'),
+
+    validateRequest  
 ];
 
-export const validateDeleteReview = [
+export const deleteReviewValidator = [
     param('id')
         .isInt().withMessage('Review ID must be an integer'),
+
     validateRequest
 ];
 
-export const validateGetReviews = [
-    query('sortBy')
-        .optional()
-        .isIn(['createdAt', 'rating']).withMessage('Sort must be one of: createdAt, rating'),
-    query('order')
-        .optional()
-        .isIn(['asc', 'desc']).withMessage('Order must be one of: asc, desc'),
-    validateRequest
-]
 
-export const validateGetReviewsByLocation = [
-    param('mapbox_id')
-        .isString().withMessage('Mapbox ID must be a string'),
-    validateRequest
-]

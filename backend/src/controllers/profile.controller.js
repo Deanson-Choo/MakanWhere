@@ -1,10 +1,15 @@
-import bcrypt from 'bcryptjs';
 import * as UserModel from '../models/user.model.js';
 
 export async function updateProfile(req, res, next) {
     try {
-        const { username, email, password } = req.body;
+        const { username, email } = req.body;
         const userId = req.user.id;
+
+        if (!username && !email) {
+            const err = new Error('At least one field (username or email) must be provided for update');
+            err.statusCode = 400;
+            return next(err);
+        }
 
         // Check if the email is already registered to another user
         if (email) {
@@ -26,15 +31,8 @@ export async function updateProfile(req, res, next) {
             }
         }
 
-        // Hash the password only if a new one was provided
-        let hashedPassword = null;
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            hashedPassword = await bcrypt.hash(password, salt);
-        }
-
         // Save the updated user to the database
-        const updatedUser = await UserModel.updateUser(userId, username, email, hashedPassword);
+        const updatedUser = await UserModel.updateUser(userId, username, email, null);
 
         const data = {
             id: updatedUser.id,
@@ -47,7 +45,7 @@ export async function updateProfile(req, res, next) {
             data
         });
     } catch (err) {
-        next(err); // Sends ANY unexpected error (DB down, JWT secret missing, etc.) to the global error handler
+        next(err); 
     }
 }
 

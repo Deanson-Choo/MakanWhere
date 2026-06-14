@@ -8,14 +8,6 @@ export function errorHandler(err, req, res, _next) {
 		message: isServerError && !isDev ? 'Internal Server Error' : (err.message || 'Unknown Error Occurred')
 	};
 
-	// Temporary debug details for local development only.
-	if (isDev) {
-		payload.debug = {
-			name: err.name,
-			stack: err.stack
-		};
-	}
-
 	// Validation middleware adds structured field-level errors in err.details
 	if (Array.isArray(err.details) && err.details.length > 0) {
 		payload.errors = err.details;

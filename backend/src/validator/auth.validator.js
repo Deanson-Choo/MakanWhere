@@ -10,24 +10,22 @@ const validateRequest = (req, res, next) => {
             field: e.path,
             message: e.msg
         }));
+        // Error looks like this:
+        // {
+        // "field": "email",
+        // "message": "Email format is invalid"
+        // }
         return next(err);
     }
     // If no errors, proceed to the controller
     next();
 };
 
-/* Requirements for Database
-- Username (text): Required, at least 3 characters, must be unique
-- Email (text): Required, must be a valid email format, must be unique
-- Password (text): Required, at least 6 characters
-*/
-
 
 // Validation rules for the registration endpoint
 export const registerValidator = [
   body('username')
-    .trim().notEmpty().withMessage('Username is required').bail()
-    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters').bail(),
+    .trim().notEmpty().withMessage('Username is required').bail(),
 
   body('email')
     .trim().notEmpty().withMessage('Email is required').bail()
@@ -35,8 +33,7 @@ export const registerValidator = [
     .normalizeEmail(),
 
   body('password')
-    .notEmpty().withMessage('Password is required').bail()
-    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters').bail(),
+    .notEmpty().withMessage('Password is required').bail(),
 
   validateRequest
 ];
