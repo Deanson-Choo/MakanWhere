@@ -32,78 +32,47 @@ I built it as a portfolio project to challenge myself with full-stack mobile dev
 
 ### Sign Up / Login
 
-<div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
-  <div style="text-align: center;">
-    <img src="screenshots/SignUp_Page.png" width="100%" alt="Signup Page" style="max-width: 300px;" />
-    <p><strong>Signup Page</strong></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="screenshots/Login_Page.png" width="100%" alt="Login Page" style="max-width: 300px;" />
-    <p><strong>Login Page</strong></p>
-  </div>
-</div>
+| Sign Up | Login |
+| --- | --- |
+| <img src="screenshots/SignUp_Page.png" alt="Signup Page" width="260" /> | <img src="screenshots/Login_Page.png" alt="Login Page" width="260" /> |
 
-----
+---
 
 ### Home Page - Map View
-<div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
-  <div style="text-align: center;">
-    <img src="screenshots/Map_View_1.png" width="100%" alt="Mapbox Map" style="max-width: 300px;" />
-    <p><strong>Default Map View</strong></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="screenshots/Map_View_2.png" width="100%" alt="Reviewed Location Modal" style="max-width: 300px;" />
-    <p><strong>Selected A Reviewed Location</strong></p>
-  </div>
-</div>
+
+| Default Map View | Selected a Reviewed Location |
+| --- | --- |
+| <img src="screenshots/Map_View_1.png" alt="Mapbox Map" width="260" /> | <img src="screenshots/Map_View_2.png" alt="Reviewed Location Modal" width="260" /> |
 
 ### Home Page - Search Flow
-<div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
-  <div style="text-align: center;">
-    <img src="screenshots/Search_1.png" width="100%" alt="MapBox SearchBox" style="max-width: 300px;" />
-    <p><strong>Search Layout</strong></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="screenshots/Search_2.png" width="100%" alt="Selected Search Location" style="max-width: 300px;" />
-    <p><strong>Selected A Location</strong></p>
-  </div>
-</div>
+
+| Search Layout | Selected a Location |
+| --- | --- |
+| <img src="screenshots/Search_1.png" alt="Mapbox SearchBox" width="260" /> | <img src="screenshots/Search_2.png" alt="Selected Search Location" width="260" /> |
 
 ### Home Page - List View
-<div style="text-align: center;">
-    <img src="screenshots/List_View.png" width="100%" alt="List View of all reviewed locations" style="max-width: 300px;" />
-    <p><strong>List View</strong></p>
-</div>
+
+<p align="center">
+  <img src="screenshots/List_View.png" alt="List View of all reviewed locations" width="260" />
+</p>
 
 ### View Reviews Page (for a specific location)
-<div style="text-align: center;">
-    <img src="screenshots/View_Reviews_Page.png" width="100%" alt="View Reviews Page for a specific location" style="max-width: 300px;" />
-    <p><strong>View Reviews Page</strong></p>
-</div>
+
+<p align="center">
+  <img src="screenshots/View_Reviews_Page.png" alt="View Reviews Page for a specific location" width="260" />
+</p>
 
 ### Add / Edit Reviews Page
-<div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
-  <div style="text-align: center;">
-    <img src="screenshots/Add_Edit_Reviews_Page_1.png" width="100%" alt="Add / Edit Reviews Page (Part 1)" style="max-width: 300px;" />
-    <p><strong>Add / Edit Reviews Page (Part 1)</strong></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="screenshots/Add_Edit_Reviews_Page_2.png" width="100%" alt="Add / Edit Reviews Page (Part 2)" style="max-width: 300px;" />
-    <p><strong>Add / Edit Reviews Page (Part 2)</strong></p>
-  </div>
-</div>
+
+| Add / Edit Review 1 | Add / Edit Review 2 |
+| --- | --- |
+| <img src="screenshots/Add_Edit_Reviews_Page_1.png" alt="Add / Edit Reviews Page (Part 1)" width="260" /> | <img src="screenshots/Add_Edit_Reviews_Page_2.png" alt="Add / Edit Reviews Page (Part 2)" width="260" /> |
 
 ### Profile Page
-<div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
-  <div style="text-align: center;">
-    <img src="screenshots/Profile_Page.png" width="100%" alt="Profile Page" style="max-width: 300px;" />
-    <p><strong>Profile Page</strong></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="screenshots/Edit_Profile_Page.png" width="100%" alt="Edit Profile Page" style="max-width: 300px;" />
-    <p><strong>Edit Profile Page</strong></p>
-  </div>
-</div>
+
+| Profile Page | Edit Profile Page |
+| --- | --- |
+| <img src="screenshots/Profile_Page.png" alt="Profile Page" width="260" /> | <img src="screenshots/Edit_Profile_Page.png" alt="Edit Profile Page" width="260" /> |
 
 
 
