@@ -4,7 +4,7 @@
     "slug": "recomme",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/ReccoMe_Logo.png",
+    "icon": "./assets/images/Logo.png",
     "scheme": "recomme",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,8 +15,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/ReccoMe_Logo.png",
-        "monochromeImage": "./assets/images/ReccoMe_Logo.png"
+        "foregroundImage": "./assets/images/Logo.png",
+        "monochromeImage": "./assets/images/Logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/ReccoMe_Logo.png",
+          "image": "./assets/images/Logo.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {

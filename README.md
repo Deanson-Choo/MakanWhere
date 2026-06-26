@@ -140,7 +140,7 @@ The backend acts as the single integration layer:
 - iOS build is currently failing
 
 ## Setting Up
-### Prerequisites (tbc)
+### Prerequisites
 
 - Node.js 18+
 - npm 8+
@@ -205,7 +205,25 @@ cd backend
 npm run dev
 ```
 
-Start frontend on Android emulator/device:
+#### Running on iOS
+
+```bash
+cd frontend
+npx expo run:ios
+```
+
+#### Running on Android
+
+If `frontend/android/local.properties` is missing, create it and point `sdk.dir` to your local Android SDK before running Android builds:
+
+```properties
+# macOS example
+sdk.dir=/Users/<your-username>/Library/Android/sdk
+```
+
+Common alternatives:
+- Windows: `sdk.dir=C:\\Users\\<your-username>\\AppData\\Local\\Android\\Sdk`
+- Linux: `sdk.dir=/home/<your-username>/Android/Sdk`
 
 ```bash
 cd frontend
