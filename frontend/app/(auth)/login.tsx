@@ -1,11 +1,11 @@
-import { Text, TextInput, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { Text, TextInput, View, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Link } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { login } from "@/services/auth";
 import { useState } from "react";
-import TopLogo from "@/components/TopLogo";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import useAuthStore from "@/store/authStore";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -14,62 +14,95 @@ export default function LoginPage() {
 
     const [showPassword, setShowPassword] = useState(false);
 
+    const storeLogin = useAuthStore((state) => state.login);
+
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+
     const handleLogin = async () => {
-        if (email && password) {
-            setIsLoading(true);
-            try {
-                await login(email, password);
-            } finally {
-                setIsLoading(false);
-            }
+        // 1. Validate
+        const trimmedEmail = email.trim();
+        const trimmedPassword = password.trim();
+
+        let hasError = false;
+        if (!trimmedEmail) {
+            setEmailError('Email is required'); hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            setEmailError('Invalid email format'); hasError = true;
         } else {
-            Alert.alert("Error", "Please enter both email and password.");
+            setEmailError('');
+        }
+
+        if (!trimmedPassword) {
+            setPasswordError('Password is required'); hasError = true;
+        } else {
+            setPasswordError('');
+        }
+
+        if (hasError) return;
+
+        // 2. Call API and store state
+        try {
+            setIsLoading(true);
+            const { data, accessToken, refreshToken } = await login(trimmedEmail, trimmedPassword);
+            storeLogin(data, accessToken, refreshToken);
+        } catch (error: any) {
+            Alert.alert('Login Failed', error.message);
+        } finally {
+            setIsLoading(false);
         }
     }
     
     return (
         <SafeAreaView style={styles.safeAreaView}>
-            <TopLogo />
-            <View style={styles.container}>
-                <Text style={styles.title}>Sign in to your Account</Text>
-                <Text style={styles.subtitle}>Enter your email and password to log in</Text>
-                <View style={styles.formContainer}>
-                    <View>
-                        <Text style={styles.formHeader}>Email</Text>
-                        <TextInput 
-                            style={styles.formInput}
-                            value={email}
-                            placeholder="recco247@email.com"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            onChangeText={setEmail}
-                        />
+            <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <View style={styles.imageContainer}>
+                        <Logo/>
                     </View>
-                    <View>
-                        <Text style={styles.formHeader}>Password</Text>
-                        <View style={styles.passwordInputContainer}>
+                    <Text style={styles.title}>Sign in to your Account</Text>
+                    <Text style={styles.subtitle}>Enter your email and password to log in</Text>
+                    <View style={styles.formContainer}>
+                        <View>
+                            <Text style={styles.formHeader}>Email</Text>
+                            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
                             <TextInput 
-                                style={styles.passwordInput}
-                                value={password}
-                                placeholder="********"
-                                secureTextEntry={!showPassword}
-                                onChangeText={setPassword}
+                                style={styles.formInput}
+                                value={email}
+                                placeholder="recco247@email.com"
+                                placeholderTextColor="#9CA3AF"
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                onChangeText={setEmail}
                             />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
-                            </TouchableOpacity>
+                        </View>
+                        <View>
+                            <Text style={styles.formHeader}>Password</Text>
+                            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+                            <View style={styles.passwordInputContainer}>
+                                <TextInput 
+                                    style={styles.passwordInput}
+                                    value={password}
+                                    placeholder="********"
+                                    placeholderTextColor="#9CA3AF"
+                                    secureTextEntry={!showPassword}
+                                    onChangeText={setPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                    <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                    <Text style={styles.forgetPassword}>Forgot password?</Text>
-                </View>
-                <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
-                    <Text style={styles.buttonText}>{isLoading ? "Logging in..." : "Log In"}</Text>
-                </TouchableOpacity>
-                <View style={styles.footerContainer}>
-                    <Text style={styles.footerText}>Don't have an account?</Text>
-                    <Link style={styles.signUp} href="/(auth)/signup">Sign Up</Link>
-                </View>
-            </View>
+                    <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+                        <Text style={styles.buttonText}>{isLoading ? "Logging in..." : "Log In"}</Text>
+                    </TouchableOpacity>
+                    <View style={styles.footerContainer}>
+                        <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+                        <Link style={styles.signUp} href="/signup">Sign Up</Link>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }
@@ -79,12 +112,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
-    image: {
-        width: 63,
-        height: 78,
-        alignSelf: 'center',
-        marginTop: 20,
-        marginBottom: 39
+    imageContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 60,
+        height: 100,
     },
     container: {
         marginTop: 55,
@@ -117,6 +149,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     passwordInput: {
+        flex: 1,
         fontSize: 14,
         fontWeight: '500',
         paddingVertical: 10,
@@ -134,19 +167,19 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         gap: 16
     },
-    forgetPassword: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: Colors.secondary,
-        alignSelf: 'flex-end',
+    errorText: {
+        fontSize: 11,
+        fontWeight: '400',
+        color: '#FF3B30',
+        marginTop: 2,
     },
     button: {
         marginTop: 16,
         marginBottom: 24,
-        backgroundColor: Colors.primary,
+        backgroundColor: '#007AFF',
         paddingVertical: 10,
         paddingHorizontal: 24,
-        width: 327,
+        width: '100%',
         height: 48,
         borderRadius: 10,
         alignItems: 'center',
@@ -154,18 +187,17 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 14,
-        fontWeight: '600',
-        textAlign: 'center',
+        fontWeight: 'bold',
+        color: '#FFFFFF',
     },
     footerText: {
         fontSize: 12,
         fontWeight: '500',
-        marginBottom: 8
     },
     signUp: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.secondary,
+        color: '#007AFF',
     },
     footerContainer: {
         flexDirection: 'row',

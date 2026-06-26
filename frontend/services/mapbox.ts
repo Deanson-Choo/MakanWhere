@@ -1,43 +1,65 @@
-import { BASE_URL } from "@/services/api";
-import { Alert } from "react-native";
-import { Suggestion } from "@/types/suggestion";
-import { Location } from "@/types/location";
+import { apiFetch, type ErrorResponse } from './api';
 
-export async function fetchLocations(query: string, sessionToken: string): Promise<Suggestion[] | undefined> {
-    try {
-        const url = new URL(`${BASE_URL}/mapbox/locations/search`);
-        url.searchParams.append("query", query);
-        url.searchParams.append("session_token", sessionToken);
-        const res = await fetch(url);
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-        const body = await res.json();
-
-        if (!body.success) {
-            Alert.alert('Search Failed', body.message);
-            return;
-        }
-
-        return body.data.suggestions as Suggestion[];
-    } catch {
-        Alert.alert('Search Failed', 'An unexpected error occurred.');
-    }
+export type Location = {
+    mapbox_id: string
+    name: string
+    address: string
+    latitude: number
+    longitude: number
+    cuisine_types: string[]
 }
 
-export async function fetchLocationDetails(sessionToken: string, mapboxId: string): Promise<Location | undefined> {
-    try {
-        const url = new URL(`${BASE_URL}/mapbox/locations/${mapboxId}`);
-        url.searchParams.append("session_token", sessionToken);
-        const res = await fetch(url);
-
-        const body = await res.json();
-
-        if (!body.success) {
-            Alert.alert('Fetch Failed', body.message);
-            return;
-        }
-
-        return body.data as Location;
-    } catch {
-        Alert.alert('Fetch Failed', 'An unexpected error occurred.');
-    }
+export type Suggestion = {
+    mapbox_id: string
+    name: string
+    address: string
 }
+
+type FetchSuggestionsResponse = {
+    success: boolean
+    data: Suggestion[]
+}
+
+type FetchLocationDetailsResponse = {
+    success: boolean
+    data: Location
+}
+
+export async function fetchSuggestions(query: string, sessionToken: string): Promise<FetchSuggestionsResponse> {
+    const url = new URL(`${BASE_URL}/api/mapbox/search/suggestions`);
+    url.searchParams.append('query', query);
+    url.searchParams.append('session_token', sessionToken);
+    const res = await apiFetch(url.toString(), {
+        method: 'GET'
+    });
+
+    const data: FetchSuggestionsResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as FetchSuggestionsResponse;
+}
+
+export async function fetchLocationDetails(mapboxId: string, sessionToken: string): Promise<FetchLocationDetailsResponse> {
+    const url = new URL(`${BASE_URL}/api/mapbox/search/${mapboxId}`);
+    url.searchParams.append('session_token', sessionToken);
+    const res = await apiFetch(url.toString(), {
+        method: 'GET'
+    });
+
+    const data: FetchLocationDetailsResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as FetchLocationDetailsResponse;
+}
+
+

@@ -3,21 +3,19 @@ import cors from 'cors';
 import "dotenv/config" 
 
 import authRouter from './routes/auth.routes.js';
-import mapBoxRouter from './routes/mapBox.routes.js';
+import mapBoxRouter from './routes/mapbox.routes.js';
 import reviewRouter from './routes/review.routes.js';
 import profileRouter from './routes/profile.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { notFoundHandler } from './middleware/notFound.middleware.js';
 
-// Typical flow:
-// Routes -> Middleware (auth, validation) -> Controllers -> Database
 
 const PORT = process.env.PORT || 3000; 
 
 const app = express();
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' })); 
+app.use(cors()); 
+app.use(express.json({ limit: '10mb' })); // Middleware to parse JSON bodies with a size limit of 10MB
 
 // We define routers here
 app.use('/api/auth', authRouter);

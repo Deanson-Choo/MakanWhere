@@ -1,11 +1,10 @@
 export function errorHandler(err, req, res, _next) {
 	const statusCode = err.statusCode || 500;
-	const isServerError = statusCode >= 500;
-	const isDev = process.env.NODE_ENV !== 'production';
+	const isServerError = statusCode >= 500; // Something unexpected happened but we don't want to leak details to the client
 
 	const payload = {
 		success: false,
-		message: isServerError && !isDev ? 'Internal Server Error' : (err.message || 'Unknown Error Occurred')
+		message: isServerError ? 'Internal Server Error' : (err.message || 'Unknown Error Occurred')
 	};
 
 	// Validation middleware adds structured field-level errors in err.details

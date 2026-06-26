@@ -1,25 +1,31 @@
+const CUISINE_CATEGORIES = {
+    'japanese_restaurant': 'Japanese',
+    'sushi_restaurant': 'Japanese',
+    'ramen_restaurant': 'Japanese',
+    'chinese_restaurant': 'Chinese',
+    'korean_restaurant': 'Korean',
+    'italian_restaurant': 'Italian',
+    'pizza_restaurant': 'Italian',
+    'indian_restaurant': 'Indian',
+    'mexican_restaurant': 'Mexican',
+    'asian_restaurant': 'Asian',
+    'thai_restaurant': 'Thai',
+    'vietnamese_restaurant': 'Vietnamese',
+    'indonesian_restaurant': 'Indonesian'
+};
+
 // Helper Function
 function getCuisineTypes(categoryIds) {
-    const cuisineCategories = {
-        'japanese_restaurant': 'Japanese',
-        'sushi_restaurant': 'Japanese',
-        'ramen_restaurant': 'Japanese',
-        'chinese_restaurant': 'Chinese',
-        'korean_restaurant': 'Korean',
-        'italian_restaurant': 'Italian',
-        'pizza_restaurant': 'Italian',
-        'indian_restaurant': 'Indian',
-        'mexican_restaurant': 'Mexican',
-        'asian_restaurant': 'Asian',
-        'thai_restaurant': 'Thai',
-        'vietnamese_restaurant': 'Vietnamese',
-        'indonesian_restaurant': 'Indonesian'
-    };
+    if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
+        return [];
+    }
 
     const res = [];
+    const seen = new Set();
     for (const categoryId of categoryIds) {
-        if (cuisineCategories[categoryId]) {
-            res.push(cuisineCategories[categoryId]);
+        if (CUISINE_CATEGORIES[categoryId] && !seen.has(CUISINE_CATEGORIES[categoryId])) {
+            res.push(CUISINE_CATEGORIES[categoryId]);
+            seen.add(CUISINE_CATEGORIES[categoryId]);
         }
     }
     return res;
@@ -54,9 +60,21 @@ export async function getSuggestions(req, res, next) {
             return next(err);
         }
 
+        if (!Array.isArray(data.suggestions)) {
+            const err = new Error('Unexpected Search Error');
+            err.statusCode = 502;
+            return next(err);
+        }
+
+        const suggestions = data.suggestions.map(suggestion => ({
+            mapbox_id: suggestion.mapbox_id,
+            name: suggestion.name,
+            address: suggestion.full_address,
+        }));
+
         res.status(200).json({ 
             success: true, 
-            data 
+            data: suggestions
         });
     } catch (error) {
         next(error);
@@ -83,7 +101,7 @@ export async function getLocationDetails(req, res, next) {
         const data = await response.json();
         if (!response.ok || !data.features || data.features.length === 0) {
             const err = new Error('Cannot Fetch Location Details');
-            err.statusCode = response.status;
+            err.statusCode = !response.ok ? response.status : 404;
             return next(err);
         }
 
@@ -93,8 +111,8 @@ export async function getLocationDetails(req, res, next) {
             success: true,
             data: {
                 mapbox_id: id,
-                place_name: feature.properties.brand?.[0] || feature.properties.name,
-                address: feature.properties.address,
+                name: feature.properties.brand?.[0] || feature.properties.name,
+                address: feature.properties.full_address,
                 latitude: feature.geometry.coordinates[1],
                 longitude: feature.geometry.coordinates[0],
                 cuisine_types: getCuisineTypes(feature.properties.poi_category_ids)
@@ -104,18 +122,6 @@ export async function getLocationDetails(req, res, next) {
         next(error);
     }
 };
-
-// Put somewhere next time:
-// Japanese: 'japanese_restaurant', 'sushi_restaurant', 'ramen_restaurant'
-// Chinese: 'chinese_restaurant'
-// Korean: 'korean_restaurant'
-// Italian: 'italian_restaurant', 'pizza_restaurant'
-// Indian: 'indian_restaurant'
-// Mexician: 'mexican_restaurant'
-// Asian: 'asian_restaurant'
-// Thai: 'thai_restaurant'
-// Vietnamese: 'vietnamese_restaurant'
-// Indonesian: 'indonesian_restaurant'
 
 export async function getSuggestionsByCategory(req, res, next) {
     try {

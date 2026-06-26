@@ -1,16 +1,15 @@
 import { body, validationResult } from 'express-validator';
 
-// This function checks if the "rules" found any issues
 const validateRequest = (req, res, next) => {
-    const errors = validationResult(req);
+    const errors = validationResult(req); 
     if (!errors.isEmpty()) { // Send to global error handler
-        const err = new Error('Validation failed');
+        const err = new Error('Auth Validation failed');
         err.statusCode = 400;
         err.details = errors.array().map(e => ({
             field: e.path,
             message: e.msg
         }));
-        // Error looks like this:
+        // Error details looks like this:
         // {
         // "field": "email",
         // "message": "Email format is invalid"

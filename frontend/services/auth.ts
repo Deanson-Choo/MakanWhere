@@ -1,141 +1,79 @@
-import { BASE_URL } from "./api";
-import { Alert } from "react-native";
-import useAuthStore from "@/store/authStore";
+import { apiFetch, type ErrorResponse } from './api';
 
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+// Payload definition
 export type UserData = {
-    id: number;
-    username: string;
-    email: string;
+    id: number
+    username: string
+    email: string
 }
 
-type ValidationError = {
-    type: string,
-    msg: string,
-    path: string,
-    location: string
-    value: string
+export type RegisterResponse = {
+    success: boolean
+    data: UserData
+    accessToken: string
+    refreshToken: string
 }
 
-type AuthResponse = {
-    success: boolean;
-    data: UserData;
-    token: string;
+export type LoginResponse = {
+    success: boolean
+    data: UserData
+    accessToken: string
+    refreshToken: string
 }
 
-type AuthError = {
-    success: boolean;
-    message: string;
-    errors?: ValidationError[];
+export type LogoutResponse = {
+    success: boolean
 }
 
-type UpdateProfileResponse = {
-    success: boolean;
-    message: string;
-    data: UserData;
-}
+export async function register(username: string, email: string, password: string): Promise<RegisterResponse> {
+    const res = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+    });
 
-type DeleteProfileResponse = {
-    success: boolean;
-}
+    const data: RegisterResponse | ErrorResponse = await res.json();
 
-export async function login(email: string, password: string) {
-    try {
-        const res = await fetch(`${BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-
-        const body = await res.json() as AuthResponse | AuthError;
-        
-        if (!body.success) {
-            Alert.alert('Login Failed', (body as AuthError).message);
-            return;
-        }
-        const { data, token } = body as AuthResponse;
-        useAuthStore.getState().login(data, token);
-    } catch (error) {
-        Alert.alert('Login Failed', (error as Error).message);
-    } 
-}
-
-export async function register(email: string, username: string, password: string) {
-    try {
-        const res = await fetch(`${BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, username, password }),
-        });
-
-        const body = await res.json() as AuthResponse | AuthError;
-
-        if (!body.success) {
-            Alert.alert('Registration Failed', (body as AuthError).message);
-            return;
-        }
-        const { data, token } = body as AuthResponse;
-        useAuthStore.getState().signup(data, token);
-    } catch (error) {
-        Alert.alert('Registration Failed', (error as Error).message);
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
     }
+
+    return data as RegisterResponse;
 }
 
-export async function updateProfile(email?: string, username?: string, password?: string) {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/profile`);
-        const res = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({ email, username, password }),
-        });
+export async function login(email: string, password: string): Promise<LoginResponse> {
+    const res = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+    });
 
-        const body = await res.json() as UpdateProfileResponse | AuthError;
+    const data: LoginResponse | ErrorResponse = await res.json();
 
-        if (!body.success) {
-            Alert.alert('Fetch Failed', (body as AuthError).message);
-            return;
-        }
-
-        const { data } = body as UpdateProfileResponse;
-        useAuthStore.getState().updateProfile(data);
-
-        Alert.alert('Profile Updated', 'Your profile has been updated successfully.');
-    } catch {
-        Alert.alert('Fetch Failed', 'An unexpected error occurred.');
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
     }
-}
-
-export async function deleteProfile() {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/profile`);
-        const res = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-        });
-
-        const body = await res.json() as DeleteProfileResponse | AuthError;
-
-        if (!body.success) {
-            Alert.alert('Delete Failed', (body as AuthError).message);
-            return;
-        }
-
-        useAuthStore.getState().logout();
-
-    } catch {
-        Alert.alert('Delete Failed', 'An unexpected error occurred while trying to delete your profile.');
-    }
-}
-
-export function logout() {
-    useAuthStore.getState().logout();
-}
     
+    return data as LoginResponse;
+}
+
+export async function logout(): Promise<LogoutResponse> {
+    const res = await apiFetch(`${BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+    });
+
+    const data: LogoutResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as LogoutResponse;
+}
+
+

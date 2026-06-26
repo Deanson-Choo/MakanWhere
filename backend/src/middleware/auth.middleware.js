@@ -11,7 +11,7 @@ export async function authMiddleware(req, res, next) {
       return next(err);
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(' ')[1]; // Grab access token from "Bearer <token>"
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -22,7 +22,9 @@ export async function authMiddleware(req, res, next) {
       return next(err);
     }
 
-    req.user = user;
+    // Strip sensitive fields before attaching to req.user
+    const { password, refresh_token, ...safeUser } = user;
+    req.user = safeUser;
     next();
 
   } catch (err) {

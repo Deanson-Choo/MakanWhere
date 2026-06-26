@@ -25,6 +25,7 @@ CREATE TABLE reviews (
     atmosphere_rating  INT  NOT NULL CHECK (atmosphere_rating BETWEEN 1 AND 5),
     worth_it_rating    INT  NOT NULL CHECK (worth_it_rating BETWEEN 1 AND 5),
 
+    meal_type          TEXT CHECK (meal_type IN ('Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Supper')),
     amount_spent       TEXT CHECK (amount_spent IN ('1-10', '10-20', '20-30', '30-40', '40-50', '>50')),
     tags               TEXT[],
     remarks            TEXT,

@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import * as UserModel from '../models/user.model.js';
 
+const accessTokenExpiry = '15m';
+const refreshTokenExpiry = '7d';
 
 export async function register(req, res, next) {
     try {
@@ -27,10 +29,10 @@ export async function register(req, res, next) {
         const newUser = await UserModel.createUser(username, email, hashedPassword);
 
         // Generate a JWT token for the user
-        const accessToken = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const accessToken = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: accessTokenExpiry });
 
         // Generate a JWT refresh token 
-        const refreshToken = jwt.sign({ id: newUser.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+        const refreshToken = jwt.sign({ id: newUser.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: refreshTokenExpiry });
         const refreshTokenSalt = await bcrypt.genSalt(10);
         const hashedRefreshToken = await bcrypt.hash(refreshToken, refreshTokenSalt);
 
@@ -77,10 +79,10 @@ export async function login(req, res, next) {
         }
 
         // Generate a JWT token for the user
-        const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: accessTokenExpiry });
 
         // Generate a JWT refresh token 
-        const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+        const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: refreshTokenExpiry });
         const refreshTokenSalt = await bcrypt.genSalt(10);
         const hashedRefreshToken = await bcrypt.hash(refreshToken, refreshTokenSalt);
 
@@ -151,9 +153,10 @@ export async function refresh(req, res, next) {
         }
 
         // Issue new tokens (rotation)
-        const newAccessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-        const newRefreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
-        const hashedRefreshToken = await bcrypt.hash(newRefreshToken, await bcrypt.genSalt(10));
+        const newAccessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: accessTokenExpiry });
+        const newRefreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: refreshTokenExpiry });
+        const refreshTokenSalt = await bcrypt.genSalt(10);
+        const hashedRefreshToken = await bcrypt.hash(newRefreshToken, refreshTokenSalt);
 
         await UserModel.updateUser(user.id, null, null, null, hashedRefreshToken);
 

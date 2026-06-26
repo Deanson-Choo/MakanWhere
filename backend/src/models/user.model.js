@@ -9,7 +9,7 @@ export async function findUserByEmail(email) {
     const values = [email];
     
     const { rows } = await query(text, values);
-    return rows[0]; // Should allow have only one user with a given email, so return the first row
+    return rows[0]; // Should have only one user with a given email, so return the first row
 }
 
 export async function findUserByUsername(username) {
@@ -21,7 +21,7 @@ export async function findUserByUsername(username) {
 
     const values = [username];
     const { rows } = await query(text, values);
-    return rows[0]; // Should allow have only one user with a given username, so return the first row
+    return rows[0]; // Should have only one user with a given username, so return the first row
 }
 
 export async function findUserById(id) {
@@ -33,7 +33,7 @@ export async function findUserById(id) {
 
     const values = [id];
     const { rows } = await query(text, values);
-    return rows[0]; // Should allow have only one user with a given id, so return the first row
+    return rows[0]; // Should have only one user with a given id, so return the first row
 }
 
 export async function createUser(username, email, hashedPassword) {

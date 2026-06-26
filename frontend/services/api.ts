@@ -1,27 +1,61 @@
-import { Platform } from 'react-native';
 import useAuthStore from '@/store/authStore';
 
-const host = process.env.EXPO_PUBLIC_API_HOST ?? (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
-const port = process.env.EXPO_PUBLIC_API_PORT ?? '3000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-export const BASE_URL = `http://${host}:${port}/api`;
+export type ErrorResponse = {
+    success: boolean
+    message: string
+    errors?: { field: string, message: string }[]
+}
 
-export async function authFetch(path: string, options: RequestInit = {}) {
-  const token = useAuthStore.getState().token;
+export type RefreshTokenResponse = {
+    success: boolean
+    accessToken: string
+    refreshToken: string
+}
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+// Rewrite headers to include Bearer token
+function withAuth(token: string | null, init?: RequestInit): RequestInit {
+    return { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } };
+}
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message ?? `Request failed: ${res.status}`);
-  }
+export async function refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+    });
 
-  return res.json();
+    const data: RefreshTokenResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as RefreshTokenResponse;
+}
+
+// Use this for protected API calls that require authentication. It will automatically attempt to refresh the token if it receives a 401 response, and retry the original request with the new token.
+export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+    const store = useAuthStore.getState();
+
+    const res = await fetch(url, withAuth(store.accessToken, init));
+    // If the access token is still valid, return the response
+    if (res.status !== 401) return res;
+
+    if (!store.refreshToken) {
+        store.logout();
+        throw new Error('Session expired. Please log in again.');
+    }
+
+    try {
+        // Attempt to refresh the token
+        const { accessToken, refreshToken: newRefreshToken } = await refreshToken(store.refreshToken);
+        store.refresh(accessToken, newRefreshToken);
+        return fetch(url, withAuth(accessToken, init));
+    } catch {
+        // If token refresh fails, log out the user
+        store.logout();
+        throw new Error('Session expired. Please log in again.');
+    }
 }

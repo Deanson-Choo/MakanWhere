@@ -1,4 +1,4 @@
-import { body, query, param, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 
 // This function checks if the "rules" found any issues
 const validateRequest = (req, res, next) => {
@@ -6,7 +6,7 @@ const validateRequest = (req, res, next) => {
     if (!errors.isEmpty()) { // Send to global error handler
         const err = new Error('Validation failed');
         err.statusCode = 400;
-        err.details = errors.array();
+        err.details = errors.array().map(e => ({ field: e.path, message: e.msg }));
         return next(err);
     }
     // If no errors, proceed to the controller
@@ -43,6 +43,10 @@ export const createReviewValidator = [
     body('review.worth_it_rating')
         .notEmpty().withMessage('worth_it_rating is required').bail()
         .isInt({ min: 1, max: 5 }).withMessage('worth_it_rating must be an integer between 1 and 5'),
+    body('review.meal_type')
+        .optional()
+        .isIn(['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Supper'])
+        .withMessage('meal_type must be one of: Breakfast, Brunch, Lunch, Dinner, Supper'),
     body('review.amount_spent')
         .optional()
         .isIn(['1-10', '10-20', '20-30', '30-40', '40-50', '>50'])
@@ -75,19 +79,23 @@ export const updateReviewValidator = [
     body('worth_it_rating')
         .optional()
         .isInt({ min: 1, max: 5 }).withMessage('worth_it_rating must be an integer between 1 and 5'),
+    body('meal_type')
+        .optional({ nullable: true })
+        .isIn(['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Supper'])
+        .withMessage('meal_type must be one of: Breakfast, Brunch, Lunch, Dinner, Supper'),
     body('amount_spent')
-        .optional()
+        .optional({ nullable: true })
         .isIn(['1-10', '10-20', '20-30', '30-40', '40-50', '>50'])
         .withMessage('amount_spent must be one of: 1-10, 10-20, 20-30, 30-40, 40-50, >50'),
     body('tags') // By right, there are fixed tags, but user can customize it in the future
-        .optional()
+        .optional({ nullable: true })
         .isArray().withMessage('tags must be an array')
         .custom((arr) => arr.every((t) => typeof t === 'string')).withMessage('each tag must be a string'),
     body('remarks')
-        .optional()
+        .optional({ nullable: true })
         .isString().withMessage('remarks must be a string'),
     body('image_urls')
-        .optional()
+        .optional({ nullable: true })
         .isArray().withMessage('image_urls must be an array')
         .custom((arr) => arr.every((u) => typeof u === 'string')).withMessage('each image URL must be a string'),
 
@@ -100,5 +108,6 @@ export const deleteReviewValidator = [
 
     validateRequest
 ];
+
 
 

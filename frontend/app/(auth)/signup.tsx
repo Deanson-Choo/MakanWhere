@@ -1,11 +1,11 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Link, router } from 'expo-router';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, ScrollView, Platform} from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from 'react';
 import { register } from '@/services/auth';
-import TopLogo from '@/components/TopLogo';
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from '@/constants/colors';
+import useAuthStore from '@/store/authStore';
+import Logo from '@/components/Logo';
 
 export default function SignUp() {
     const [email, setEmail] = useState('');
@@ -15,67 +15,113 @@ export default function SignUp() {
 
     const [showPassword, setShowPassword] = useState(false);
 
+    const storeRegister = useAuthStore((state) => state.register);
+
+    const [emailError, setEmailError] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+
     const handleSignUp = async () => {
-        if (email && username && password) {
-            setIsLoading(true);
-            try {
-                await register(email, username, password);
-            } finally {
-                setIsLoading(false);
-            }
+        // 1. Validate
+        const trimmedEmail = email.trim();
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+
+        let hasError = false;
+        if (!trimmedEmail) {
+            setEmailError('Email is required'); hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) { // Simple email regex for basic validation
+            setEmailError('Invalid email format'); hasError = true;
         } else {
-            Alert.alert("Error", "Please fill in all fields.");
+            setEmailError('');
+        }
+
+        if (!trimmedUsername) {
+            setUsernameError('Username is required'); hasError = true;
+        } else {
+            setUsernameError('');
+        }
+
+        if (!trimmedPassword) {
+            setPasswordError('Password is required'); hasError = true;
+        } else {
+            setPasswordError('');
+        }
+
+        if (hasError) return;
+
+        // 2. Call API and store state
+        try {
+            setIsLoading(true);
+            const { data, accessToken, refreshToken } = await register(trimmedUsername, trimmedEmail, trimmedPassword);
+            storeRegister(data, accessToken, refreshToken);
+        } catch (error: any) {
+            Alert.alert('Sign Up Failed', error.message);
+        } finally {
+            setIsLoading(false);
         }
     }
 
     return (
         <SafeAreaView style={styles.safeAreaView}>
-            <TopLogo />
-            <View style={styles.container}>
-                <Ionicons name="arrow-back" size={24} color="black" style={styles.backArrow} onPress={() => router.back()} />
-                <Text style={styles.title}>Sign up</Text>
-                <Text style={styles.subtitle}>Create an account to continue!</Text>
-                <View style={styles.formContainer}>
-                    <View>
-                        <Text style={styles.formHeader}>Username</Text>
-                        <TextInput 
-                            style={styles.formInput}
-                            value={username}
-                            placeholder="recco247"
-                            onChangeText={setUsername}
-                        />
-                    </View>
-                    <View>
-                        <Text style={styles.formHeader}>Email</Text>
-                        <TextInput 
-                            style={styles.formInput}
-                            value={email}
-                            placeholder="recco247@email.com"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            onChangeText={setEmail}
-                        />
-                    </View>
-                    <View>
-                        <Text style={styles.formHeader}>Password</Text>
-                        <View style={styles.passwordInputContainer}>
-                            <TextInput 
-                                style={styles.passwordInput}
-                                value={password}
-                                placeholder="********"
-                                secureTextEntry={!showPassword}
-                                onChangeText={setPassword}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
-                            </TouchableOpacity>
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+                    <View style={styles.container}>
+                        <Ionicons name="arrow-back" size={24} color="black" style={styles.backArrow} onPress={() => router.back()} />
+                        <View style={styles.imageContainer}>
+                            <Logo/>
                         </View>
+                        <Text style={styles.title}>Sign up</Text>
+                        <Text style={styles.subtitle}>Create an account to continue!</Text>
+                        <View style={styles.formContainer}>
+                            <View>
+                                <Text style={styles.formHeader}>Username</Text>
+                                {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
+                                <TextInput 
+                                    style={styles.formInput}
+                                    value={username}
+                                    placeholder="recco247"
+                                    placeholderTextColor="#9CA3AF"
+                                    onChangeText={setUsername}
+                                />
+                            </View>
+                            <View>
+                                <Text style={styles.formHeader}>Email</Text>
+                                {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+                                <TextInput 
+                                    style={styles.formInput}
+                                    value={email}
+                                    placeholder="recco247@email.com"
+                                    placeholderTextColor="#9CA3AF"
+                                    autoCapitalize="none"
+                                    keyboardType="email-address"
+                                    onChangeText={setEmail}
+                                />
+                            </View>
+                            <View>
+                                <Text style={styles.formHeader}>Password</Text>
+                                {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+                                <View style={styles.passwordInputContainer}>
+                                    <TextInput 
+                                        style={styles.passwordInput}
+                                        value={password}
+                                        placeholder="********"
+                                        placeholderTextColor="#9CA3AF"
+                                        secureTextEntry={!showPassword}
+                                        onChangeText={setPassword}
+                                    />
+                                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                        <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
+                            <Text style={styles.buttonText}>{isLoading ? "Signing up..." : "Sign Up"}</Text>
+                        </TouchableOpacity>
                     </View>
-                </View>
-                <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
-                    <Text style={styles.buttonText}>{isLoading ? "Signing up..." : "Sign Up"}</Text>
-                </TouchableOpacity>
-            </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }
@@ -87,8 +133,11 @@ const styles = StyleSheet.create({
     },
     backArrow: {
         position: 'absolute',
-        top: -29,
-        left: 40
+        top: -32,
+        left: 25
+    },
+    scrollContent: {
+        flexGrow: 1,
     },
     container: {
         marginTop: 55,
@@ -109,7 +158,7 @@ const styles = StyleSheet.create({
     formHeader: {
         fontSize: 12,
         fontWeight: '500',
-        marginBottom: 2
+        marginBottom: 2,
     },
     formInput: {
         borderWidth: 1,
@@ -138,13 +187,18 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         gap: 16
     },
+    errorText: {
+        fontSize: 11,
+        fontWeight: '400',
+        color: '#FF3B30',
+        marginTop: 2,
+    },
     button: {
         marginTop: 16,
         marginBottom: 24,
-        backgroundColor: Colors.primary,
+        backgroundColor: '#007AFF',
         paddingVertical: 10,
         paddingHorizontal: 24,
-        width: 327,
         height: 48,
         borderRadius: 10,
         alignItems: 'center',
@@ -154,5 +208,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         textAlign: 'center',
-    }
+        color: '#FFFFFF',
+    },
+    imageContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 60,
+        height: 100,
+    },
 })

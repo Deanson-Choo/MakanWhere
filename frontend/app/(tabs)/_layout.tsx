@@ -20,21 +20,21 @@ const TabLayout = () => {
       />
 
       <Tabs.Screen
-        name="explore"
+        name="recco_me"
         options={{
-          title: "Explore",
+          title: "Recco Me",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="thumbs-up" size={size} color={color} />
           ),
         }}
       /> 
 
       <Tabs.Screen
-        name="map"
+        name="recco_us"
         options={{
-          title: "Map",
+          title: "Recco Us",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
+            <Ionicons name="thumbs-up" size={size} color={color} />
           ),
         }}
       />

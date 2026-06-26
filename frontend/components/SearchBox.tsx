@@ -1,41 +1,42 @@
 import 'react-native-get-random-values'
 import {useState, useEffect, useRef} from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator} from "react-native";
-import { Suggestion } from "../types/suggestion";
-import { router } from 'expo-router';
-import { useLocationSearch } from '@/hooks/useLocation';
+import { Alert, FlatList, TextInput, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Location, Suggestion, fetchSuggestions, fetchLocationDetails } from '../services/mapbox';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Location } from '@/types/location';
 
 type SearchBoxProps = {
-    onFocusChange: (isFocused: boolean) => void;
-    setSelectedLocation: (location: Location | undefined) => void;
+    setIsSearchFocused: (isFocused: boolean) => void;
+    setSelectedLocation: (location: Location | null) => void;
 }
 
-export default function SearchBox({onFocusChange, setSelectedLocation}: SearchBoxProps) {
-    // Search Bar Focus State
+export default function SearchBox({setIsSearchFocused, setSelectedLocation}: SearchBoxProps) {
+    // Search Bar Focus State (To toggle between map and search results)
     const [focused, setFocused] = useState(false)
     const inputRef = useRef<TextInput>(null);
 
     const handleFocus = () => {
         setFocused(true);
-        onFocusChange?.(true);
+        setIsSearchFocused(true);
     }
 
     const handleBack = () => {
         setFocused(false);
-        onFocusChange?.(false);
-        inputRef.current?.blur();
+        setIsSearchFocused(false);
+        inputRef.current?.blur(); // Dismiss keyboard and blur input
+
         setQuery('');
+        setSelectedLocation(null);
+        setSuggestions([]);
     }
 
     // Search Logic
-    const { suggestions, search, isLoading, getDetails } = useLocationSearch();
     const [query, setQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('')
-    const [sessionToken] = useState(() => uuidv4());
+    const sessionTokenRef = useRef(uuidv4());
+    const isSelectingRef = useRef(false);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
     // This updates 'debouncedQuery' 300ms after 'query' stops changing.
     useEffect(() => {
@@ -48,18 +49,44 @@ export default function SearchBox({onFocusChange, setSelectedLocation}: SearchBo
     }, [query]);
 
     useEffect(() => {
-        if (debouncedQuery.trim()) {
-            search(debouncedQuery, sessionToken);
-        } else {
-            search('', sessionToken); // Clear suggestions when query is empty
-        }
-    }, [search, debouncedQuery, sessionToken])
+        (async () => {
+            if (debouncedQuery.trim()) {
+                // Fetch suggestions
+                try {
+                    const response = await fetchSuggestions(debouncedQuery, sessionTokenRef.current);
+                    setSuggestions(response.data);
+                } catch (error: any) {
+                    Alert.alert('Search Error', error.message || 'Failed to fetch suggestions. Please try again.');
+                }
+            } else {
+                // Clear suggestions
+                setSuggestions([]);
+            }
+        })();
+    }, [debouncedQuery]);
 
+
+    // When user selects a suggestion, we want to:
+    // 1. Search the Mapbox ID to get the full location details (including lat/lng)
+    // 2. If successful, clear the search box and suggestions, and pass the location details to the parent component (Map screen) to update the map view.
     const handleSelection = async (mapboxId: string) => {
-        const location = await getDetails(mapboxId, sessionToken);
-        if (location) {
-            setSelectedLocation(location);
-            handleBack();
+        if (isSelectingRef.current) return;
+        isSelectingRef.current = true;
+        try {
+            const response = await fetchLocationDetails(mapboxId, sessionTokenRef.current);
+            setSelectedLocation(response.data);
+            setQuery('');
+            setSuggestions([]);
+
+            sessionTokenRef.current = uuidv4(); // Generate a new token for the next search session
+
+            setFocused(false);
+            setIsSearchFocused(false);
+            inputRef.current?.blur(); // Dismiss keyboard and blur input
+        } catch (error: any) {
+            Alert.alert('Location Details Error', error.message || 'Failed to fetch location details. Please try again.');
+        } finally {
+            isSelectingRef.current = false;
         }
     }
 
@@ -73,7 +100,7 @@ export default function SearchBox({onFocusChange, setSelectedLocation}: SearchBo
                     </TouchableOpacity>
                 ) : (
                 <Image 
-                    source={require('@/assets/images/Logo_Plain.png')}
+                    source={require('@/assets/images/Logo_Initials.png')}
                     style={styles.logo}
                     contentFit="contain"
                 />
@@ -97,6 +124,7 @@ export default function SearchBox({onFocusChange, setSelectedLocation}: SearchBo
                 data={suggestions}
                 keyExtractor={(item: Suggestion) => item.mapbox_id}
                 style={styles.suggestionsContainer}
+                keyboardShouldPersistTaps="handled"
 
                 ItemSeparatorComponent={() => <View style={{ marginVertical: 10,borderColor: '#cbcbcb', borderWidth: 1 }} />}
 
@@ -150,7 +178,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     suggestionAddress: {
-        fontSize: 16,
+        fontSize: 13,
         fontWeight: '300',
     }
 

@@ -1,146 +1,148 @@
-import { Location } from "@/types/location";
-import { Alert } from "react-native";
-import { BASE_URL } from "./api";
-import useAuthStore from '@/store/authStore';
+import { apiFetch, type ErrorResponse } from './api';
 
-export async function fetchReviewsByUser(sortBy: 'createdAt' | 'rating' = 'createdAt', order: 'asc' | 'desc' = 'desc'): Promise<Location[]> {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/reviews`);
-        url.searchParams.append('sortBy', sortBy);
-        url.searchParams.append('order', order);
-        const res = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-        });
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-        const body = await res.json();
-
-        if (!body.success) {
-            Alert.alert('Fetch Failed', body.message);
-            return [];
-        }
-
-        return body.data as Location[];
-    } catch {
-        Alert.alert('Fetch Failed', 'An unexpected error occurred.');
-        return [];
-    }
+export type ReviewEntry = {
+    id: number;
+    food_rating: number;
+    atmosphere_rating: number;
+    worth_it_rating: number;
+    meal_type: MealType | null;
+    amount_spent: AmountSpent | null;
+    tags: string[] | null;
+    remarks: string | null;
+    image_urls: string[] | null;
+    created_at: string;
+    updated_at: string;
 }
 
-export async function fetchReviewsByUserByLocation(mapbox_id: string): Promise<Location | undefined> {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/reviews/location/${mapbox_id}`);
-        const res = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-        });
-
-        const body = await res.json();
-
-        if (!body.success) {
-            Alert.alert('Fetch Failed', body.message);
-            return;
-        }
-
-        return body.data as Location;
-    } catch {
-        Alert.alert('Fetch Failed', 'An unexpected error occurred.');
-    }
-}
-
-export type ReviewPayload = {
+export type Review = {
     mapbox_id: string;
-    rating: number;
-    comment: string;
     place_name: string;
     address: string;
     latitude: number;
     longitude: number;
-    image?: string;
+    cuisine_types: string[] | null;
+    reviews: ReviewEntry[];
 }
 
-export async function submitReview(payload: ReviewPayload) {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/reviews`);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify(payload),
-        });
+export type AmountSpent = '1-10' | '10-20' | '20-30' | '30-40' | '40-50' | '>50';
+export type MealType = 'Breakfast' | 'Brunch' | 'Lunch' | 'Dinner' | 'Supper';
 
-        const body = await res.json();
+type CreateReviewBody = {
+    location: {
+        mapbox_id: string;
+        place_name: string;
+        address: string;
+        latitude: number;
+        longitude: number;
+        cuisine_types?: string[];
+    };
+    review: {
+        food_rating: number;
+        atmosphere_rating: number;
+        worth_it_rating: number;
+        meal_type?: MealType;
+        amount_spent?: AmountSpent;
+        tags?: string[];
+        remarks?: string;
+        image_urls?: string[];
+    };
+};
 
-        if (!body.success) {
-            Alert.alert('Submission Failed', body.message);
-            return;
-        }
+export type UpdateReviewBody = {
+    food_rating?: number;
+    atmosphere_rating?: number;
+    worth_it_rating?: number;
+    meal_type?: MealType | null;
+    amount_spent?: AmountSpent | null;
+    tags?: string[] | null;
+    remarks?: string | null;
+    image_urls?: string[] | null;
+};
 
-        Alert.alert('Review Submitted', 'Your review has been submitted successfully.');
-
-    } catch {
-        Alert.alert('Submission Failed', 'An unexpected error occurred.');
-    }   
+type GetReviewsResponse = {
+    success: boolean;
+    data: Review[];
 }
 
-export async function updateReview(reviewId: number, rating: number, comment: string) {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/reviews/${reviewId}`)
-        const res = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({rating, comment})
-        });
+type UpdateReviewResponse = {
+    success: boolean;
+    data: ReviewEntry;
+}
 
-        const body = await res.json()
+type DeleteReviewResponse = {
+    success: boolean;
+    data: null;
+}
 
-        if (!body.success) {
-            Alert.alert('Update failed', body.message)
-            return;
-        }
+type CreateReviewResponse = {
+    success: boolean;
+    data: ReviewEntry;
+}
 
-        Alert.alert('Update Successful')
 
-    } catch {
-        Alert.alert('Update Failed')
+export async function getReviews(): Promise<GetReviewsResponse> {
+    const url = new URL(`${BASE_URL}/api/reviews`);
+    const res = await apiFetch(url.toString(), {
+        method: 'GET'
+    });
+
+    const data: GetReviewsResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        // Let the caller handle the error 
+        throw new Error((data as ErrorResponse).message);
     }
+
+    return data as GetReviewsResponse;
 }
 
-export async function deleteReview(reviewId: number) {
-    const token = useAuthStore.getState().token;
-    try {
-        const url = new URL(`${BASE_URL}/reviews/${reviewId}`)
-        const res = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-        });
+export async function updateReview(id: number, body: UpdateReviewBody): Promise<UpdateReviewResponse> {
+    const url = new URL(`${BASE_URL}/api/reviews/${id}`);
+    const res = await apiFetch(url.toString(), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
 
-        const body = await res.json()
+    const data: UpdateReviewResponse | ErrorResponse = await res.json();
 
-        if (!body.success) {
-            Alert.alert('Delete failed', body.message)
-            return;
-        }
-
-        Alert.alert('Delete Successful')
-
-    } catch {
-        Alert.alert('Delete Failed', 'An unexpected error occurred.');
+    if (!data.success) {
+        throw new Error((data as ErrorResponse).message);
     }
+
+    return data as UpdateReviewResponse;
+}
+
+export async function deleteReview(id: number): Promise<DeleteReviewResponse> {
+    const url = new URL(`${BASE_URL}/api/reviews/${id}`);
+    const res = await apiFetch(url.toString(), {
+        method: 'DELETE',
+    });
+
+    const data: DeleteReviewResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as DeleteReviewResponse;
+}
+
+export async function createReview(body: CreateReviewBody): Promise<CreateReviewResponse> {
+    const url = new URL(`${BASE_URL}/api/reviews`);
+    const res = await apiFetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+
+    const data: CreateReviewResponse | ErrorResponse = await res.json();
+
+    if (!data.success) {
+        throw new Error((data as ErrorResponse).message);
+    }
+
+    return data as CreateReviewResponse;
 }
