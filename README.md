@@ -137,8 +137,6 @@ The backend acts as the single integration layer:
 - Cross-layer schema consistency is manual
   - Validation and data contracts are maintained separately across frontend and backend, which can lead to drift. A shared schema strategy is not yet implemented.
 
-- iOS build is currently failing
-
 ## Setting Up
 ### Prerequisites
 
