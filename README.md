@@ -137,6 +137,9 @@ The backend acts as the single integration layer:
 - Cross-layer schema consistency is manual
   - Validation and data contracts are maintained separately across frontend and backend, which can lead to drift. A shared schema strategy is not yet implemented.
 
+- Synchronous Base64 Ingestion & Fire-and-Forget Uploads
+  - Synchronously dispatching Cloudinary deletion/upload tasks via unhandled promises leaves no retry mechanism or persistence layer. If the server process crashes or restarts mid-execution, background jobs fail silently and leave orphaned resources in Cloudinary
+
 ## Setting Up
 ### Prerequisites
 
